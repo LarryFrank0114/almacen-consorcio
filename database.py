@@ -1,35 +1,86 @@
 import streamlit as st
 import pandas as pd
+from datetime import datetime
 
 def inicializar_db():
-    """Inicializa la base de datos en la memoria de la sesión si no existe."""
-    if 'inventario' not in st.session_state:
-        st.session_state.inventario = pd.DataFrame([
-            {"Código": "TUB-PE-110", "Material": "Tubería PEAD 110mm (Saneamiento)", "Almacén": "Almacén 6", "Ubicación": "Estante A - Nivel 2", "Stock": 140, "Unidad": "Metros", "Encargado": "Juan Carlos R."},
-            {"Código": "VAL-CO-04", "Material": "Válvula de Compuerta 4''", "Almacén": "Almacén 8", "Ubicación": "Pallet 12", "Stock": 25, "Unidad": "Unidades", "Encargado": "Carlos M."},
-            {"Código": "ACC-TEE-110", "Material": "Accesorio Tee Inyectada 110mm", "Almacén": "Almacén 10", "Ubicación": "Caja 05", "Stock": 8, "Unidad": "Unidades", "Encargado": "Luis A."}
+    # 1. Maestro de Materiales (Catálogo único)
+    if 'maestro_materiales' not in st.session_state:
+        st.session_state.maestro_materiales = pd.DataFrame([
+            {"Código": "TUB-PE-110", "Material": "Tubería PEAD 110mm", "Unidad": "Metros"},
+            {"Código": "VAL-CO-04", "Material": "Válvula de Compuerta 4''", "Unidad": "Unidades"},
+            {"Código": "ACC-TEE-110", "Material": "Accesorio Tee Inyectada 110mm", "Unidad": "Unidades"},
+            {"Código": "HID-PO-02", "Material": "Hidrante de Poste Completo", "Unidad": "Unidades"}
         ])
 
-def crear_registro(codigo, material, almacen, ubicacion, stock, unidad, encargado):
-    df = st.session_state.inventario
-    if codigo in df['Código'].values:
-        return False, "❌ El código de material ya existe."
-    
-    nuevo_item = {"Código": codigo, "Material": material, "Almacén": almacen, "Ubicación": ubicacion, "Stock": int(stock), "Unidad": unidad, "Encargado": encargado}
-    st.session_state.inventario = pd.concat([df, pd.DataFrame([nuevo_item])], ignore_index=True)
-    return True, "✔️ Material registrado con éxito en la base de datos."
+    # 2. Inventario Consolidado por Almacén (Stock Actual)
+    if 'inventario' not in st.session_state:
+        st.session_state.inventario = pd.DataFrame([
+            {"Código": "TUB-PE-110", "Material": "Tubería PEAD 110mm", "Almacén": "Almacén 6", "Ubicación": "Estante A - Nivel 2", "Stock": 140, "Unidad": "Metros", "Encargado": "Juan Carlos R."},
+            {"Código": "VAL-CO-04", "Material": "Válvula de Compuerta 4''", "Almacén": "Almacén 8", "Ubicación": "Pallet 12", "Stock": 25, "Unidad": "Unidades", "Encargado": "Carlos M."},
+            {"Código": "ACC-TEE-110", "Material": "Accesorio Tee Inyectada 110mm", "Almacén": "Almacén 10", "Ubicación": "Caja 05", "Stock": 8, "Unidad": "Unidades", "Encargado": "Luis A."},
+            {"Código": "TUB-PE-110", "Material": "Tubería PEAD 110mm", "Almacén": "Almacén 1", "Ubicación": "Zona Patio A", "Stock": 50, "Unidad": "Metros", "Encargado": "Ing. Eduardo T."}
+        ])
 
-def actualizar_registro(codigo, columna, nuevo_valor):
-    df = st.session_state.inventario
-    idx = df[df['Código'] == codigo].index
-    if len(idx) > 0:
-        if columna == 'Stock':
-            nuevo_valor = int(nuevo_valor)
-        st.session_state.inventario.at[idx[0], columna] = nuevo_valor
-        return True
-    return False
+    # 3. Historial de Transacciones (Para el Dashboard y Auditorías)
+    if 'historial_movimientos' not in st.session_state:
+        st.session_state.historial_movimientos = pd.DataFrame([
+            {
+                "Fecha": "2026-06-01", "Tipo": "Egreso (Vale de Salida)", "Documento": "V-001", "Almacén": "Almacén 6",
+                "Solicitante": "Téc. Operativo", "Supervisor": "Ing. Marcos Silva", "Código": "TUB-PE-110",
+                "Material": "Tubería PEAD 110mm", "Cantidad": 20, "Unidad": "Metros", "Encargado": "Juan Carlos R.", "Observaciones": "Frente SJM Sector 3"
+            },
+            {
+                "Fecha": "2026-06-10", "Tipo": "Egreso (Vale de Salida)", "Documento": "V-002", "Almacén": "Almacén 8",
+                "Solicitante": "Téc. Conexiones", "Supervisor": "Ing. Laura Benites", "Código": "VAL-CO-04",
+                "Material": "Válvula de Compuerta 4''", "Cantidad": 5, "Unidad": "Unidades", "Encargado": "Carlos M.", "Observaciones": "Frente VMT Sector 1"
+            },
+            {
+                "Fecha": "2026-05-15", "Tipo": "Egreso (Vale de Salida)", "Documento": "V-003", "Almacén": "Almacén 1",
+                "Solicitante": "Cuadrilla A", "Supervisor": "Ing. Marcos Silva", "Código": "TUB-PE-110",
+                "Material": "Tubería PEAD 110mm", "Cantidad": 15, "Unidad": "Metros", "Encargado": "Ing. Eduardo T.", "Observaciones": "Frente VES Av. Central"
+            }
+        ])
 
-def eliminar_registro(codigo):
-    df = st.session_state.inventario
-    st.session_state.inventario = df[df['Código'] != codigo].reset_index(drop=True)
-    return True
+def registrar_transaccion(tipo_mov, doc, almacen, fecha, solicitante, supervisor, encargado, observaciones, lista_recursos):
+    df_inv = st.session_state.inventario
+    df_hist = st.session_state.historial_movimientos
+    nuevos_movimientos = []
+
+    # Validar primero stock de todos los recursos si es un egreso
+    if tipo_mov == "Egreso (Vale de Salida)":
+        for rec in lista_recursos:
+            idx = df_inv[(df_inv['Código'] == rec['Código']) & (df_inv['Almacén'] == almacen)].index
+            stock_actual = df_inv.at[idx[0], 'Stock'] if len(idx) > 0 else 0
+            if stock_actual < rec['Cantidad']:
+                return False, f"❌ Stock insuficiente de {rec['Material']} en {almacen}. Disponible: {stock_actual}"
+
+    # Procesar la transacción para cada recurso
+    for rec in lista_recursos:
+        idx = df_inv[(df_inv['Código'] == rec['Código']) & (df_inv['Almacén'] == almacen)].index
+        
+        if len(idx) > 0:
+            stock_actual = df_inv.at[idx[0], 'Stock']
+            if tipo_mov == "Egreso (Vale de Salida)":
+                df_inv.at[idx[0], 'Stock'] = stock_actual - rec['Cantidad']
+            else:
+                df_inv.at[idx[0], 'Stock'] = stock_actual + rec['Cantidad']
+        else:
+            # Si el material no existía en ese almacén, se crea el registro de ubicación por defecto
+            nuevo_stock_item = {
+                "Código": rec['Código'], "Material": rec['Material'], "Almacén": almacen,
+                "Ubicación": "Por Asignar", "Stock": rec['Cantidad'], "Unidad": rec['Unidad'], "Encargado": encargado
+            }
+            df_inv = pd.concat([df_inv, pd.DataFrame([nuevo_stock_item])], ignore_index=True)
+
+        # Añadir al historial
+        mov = {
+            "Fecha": str(fecha), "Tipo": tipo_mov, "Documento": doc, "Almacén": almacen,
+            "Solicitante": solicitante, "Supervisor": supervisor, "Código": rec['Código'],
+            "Material": rec['Material'], "Cantidad": rec['Cantidad'], "Unidad": rec['Unidad'],
+            "Encargado": encargado, "Observaciones": observaciones
+        }
+        nuevos_movimientos.append(mov)
+
+    st.session_state.inventario = df_inv
+    st.session_state.historial_movimientos = pd.concat([df_hist, pd.DataFrame(nuevos_movimientos)], ignore_index=True)
+    return True, f"✔️ Transacción {doc} procesada con éxito con {len(lista_recursos)} recurso(s)."
