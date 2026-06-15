@@ -1,7 +1,13 @@
 import streamlit as st
 import pandas as pd
-import gspread
+import subprocess
+import sys
 
+try:
+    import gspread
+except ModuleNotFoundError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "gspread"])
+    import gspread
 def conectar_sheets():
     """Establece conexión con la hoja de cálculo usando los secretos seguros de Streamlit."""
     try:
