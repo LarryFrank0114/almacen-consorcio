@@ -17,7 +17,7 @@ def inicializar_db():
     if 'inventario' not in st.session_state:
         st.session_state.inventario = pd.DataFrame([
             {"Código": "TUB-PE-110", "Material": "Tubería PEAD 110mm", "Almacén": "Almacén 6", "Ubicación": "Estante A - Nivel 2", "Stock": 140, "Unidad": "Metros", "Encargado": "Juan Carlos R."},
-            {"Código": "VAL-CO-04", "Material": "Válvula de Compuerta 4''", "Almacén": "Almacén 8", "Ubicación": "Pallet 12", "Stock": 25, "Unidad": "Unidades", "Encargado": "Carlos M."},
+            {"Código": "VAL-CO-04", "Material": "Válvula de Compuerta 4", "Almacén": "Almacén 8", "Ubicación": "Pallet 12", "Stock": 25, "Unidad": "Unidades", "Encargado": "Carlos M."},
             {"Código": "ACC-TEE-110", "Material": "Accesorio Tee Inyectada 110mm", "Almacén": "Almacén 10", "Ubicación": "Caja 05", "Stock": 8, "Unidad": "Unidades", "Encargado": "Luis A."},
             {"Código": "TUB-PE-110", "Material": "Tubería PEAD 110mm", "Almacén": "Almacén 1", "Ubicación": "Zona Patio A", "Stock": 50, "Unidad": "Metros", "Encargado": "Ing. Eduardo T."}
         ])
