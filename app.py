@@ -136,18 +136,18 @@ elif opcion_menu == "📖 Reporte de Stock Actual":
         
         materiales_en_almacen = df_inv[df_inv['Almacén'] == almacen_crud]
         
-        if not materiales_en_almacen.empty:
+      if not materiales_en_almacen.empty:
             with col_sel2:
-        # Convertimos a string con .astype(str) para evitar colapsos numéricos
-   opciones_combo = materiales_en_almacen['Código'].astype(str) + " - " + materiales_en_almacen['Material'].astype(str)
-
-   material_crud = st.selectbox(
-       "2. Seleccione el Material a modificar:", 
-       options=opciones_combo, 
-       key="crud_material"
-   ) 
+                # Convertimos a string con .astype(str) para evitar colapsos numéricos
+                opciones_combo = materiales_en_almacen['Código'].astype(str) + " - " + materiales_en_almacen['Material'].astype(str)
+                
+                material_crud = st.selectbox(
+                    "2. Seleccione el Material a modificar:", 
+                    options=opciones_combo, 
+                    key="crud_material"
+                )
+            
             codigo_seleccionado = material_crud.split(" - ")[0]
-            fila_actual = df_inv[(df_inv['Código'] == codigo_seleccionado) & (df_inv['Almacén'] == almacen_crud)].iloc[0]
             
             with st.form("form_edicion_crud"):
                 st.markdown(f"**Modificando:** {fila_actual['Material']} en **{almacen_crud}**")
