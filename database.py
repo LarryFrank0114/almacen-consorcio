@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
 
 def inicializar_db():
-    # 1. Maestro de Materiales (Catálogo único)
+    """Inicializa las estructuras de datos globales en la sesión de Streamlit."""
+    
+    # 1. Maestro único de materiales de saneamiento
     if 'maestro_materiales' not in st.session_state:
         st.session_state.maestro_materiales = pd.DataFrame([
             {"Código": "TUB-PE-110", "Material": "Tubería PEAD 110mm", "Unidad": "Metros"},
@@ -12,7 +13,7 @@ def inicializar_db():
             {"Código": "HID-PO-02", "Material": "Hidrante de Poste Completo", "Unidad": "Unidades"}
         ])
 
-    # 2. Inventario Consolidado por Almacén (Stock Actual)
+    # 2. Inventario físico consolidado por sede (Stock Actual)
     if 'inventario' not in st.session_state:
         st.session_state.inventario = pd.DataFrame([
             {"Código": "TUB-PE-110", "Material": "Tubería PEAD 110mm", "Almacén": "Almacén 6", "Ubicación": "Estante A - Nivel 2", "Stock": 140, "Unidad": "Metros", "Encargado": "Juan Carlos R."},
@@ -21,7 +22,7 @@ def inicializar_db():
             {"Código": "TUB-PE-110", "Material": "Tubería PEAD 110mm", "Almacén": "Almacén 1", "Ubicación": "Zona Patio A", "Stock": 50, "Unidad": "Metros", "Encargado": "Ing. Eduardo T."}
         ])
 
-    # 3. Historial de Transacciones (Para el Dashboard y Auditorías)
+    # 3. Historial de movimientos transaccionales para auditoría y Dashboard
     if 'historial_movimientos' not in st.session_state:
         st.session_state.historial_movimientos = pd.DataFrame([
             {
@@ -42,45 +43,13 @@ def inicializar_db():
         ])
 
 def registrar_transaccion(tipo_mov, doc, almacen, fecha, solicitante, supervisor, encargado, observaciones, lista_recursos):
+    """Procesa ingresos y egresos de múltiples recursos de forma simultánea mitigando errores de stock."""
     df_inv = st.session_state.inventario
     df_hist = st.session_state.historial_movimientos
     nuevos_movimientos = []
 
-    # Validar primero stock de todos los recursos si es un egreso
+    # Validar disponibilidad física del stock antes de operar egresos
     if tipo_mov == "Egreso (Vale de Salida)":
         for rec in lista_recursos:
             idx = df_inv[(df_inv['Código'] == rec['Código']) & (df_inv['Almacén'] == almacen)].index
-            stock_actual = df_inv.at[idx[0], 'Stock'] if len(idx) > 0 else 0
-            if stock_actual < rec['Cantidad']:
-                return False, f"❌ Stock insuficiente de {rec['Material']} en {almacen}. Disponible: {stock_actual}"
-
-    # Procesar la transacción para cada recurso
-    for rec in lista_recursos:
-        idx = df_inv[(df_inv['Código'] == rec['Código']) & (df_inv['Almacén'] == almacen)].index
-        
-        if len(idx) > 0:
-            stock_actual = df_inv.at[idx[0], 'Stock']
-            if tipo_mov == "Egreso (Vale de Salida)":
-                df_inv.at[idx[0], 'Stock'] = stock_actual - rec['Cantidad']
-            else:
-                df_inv.at[idx[0], 'Stock'] = stock_actual + rec['Cantidad']
-        else:
-            # Si el material no existía en ese almacén, se crea el registro de ubicación por defecto
-            nuevo_stock_item = {
-                "Código": rec['Código'], "Material": rec['Material'], "Almacén": almacen,
-                "Ubicación": "Por Asignar", "Stock": rec['Cantidad'], "Unidad": rec['Unidad'], "Encargado": encargado
-            }
-            df_inv = pd.concat([df_inv, pd.DataFrame([nuevo_stock_item])], ignore_index=True)
-
-        # Añadir al historial
-        mov = {
-            "Fecha": str(fecha), "Tipo": tipo_mov, "Documento": doc, "Almacén": almacen,
-            "Solicitante": solicitante, "Supervisor": supervisor, "Código": rec['Código'],
-            "Material": rec['Material'], "Cantidad": rec['Cantidad'], "Unidad": rec['Unidad'],
-            "Encargado": encargado, "Observaciones": observaciones
-        }
-        nuevos_movimientos.append(mov)
-
-    st.session_state.inventario = df_inv
-    st.session_state.historial_movimientos = pd.concat([df_hist, pd.DataFrame(nuevos_movimientos)], ignore_index=True)
-    return True, f"✔️ Transacción {doc} procesada con éxito con {len(lista_recursos)} recurso(s)."
+            stock_actual = df_inv.at[idx[0], 'Stock'] if len(idx)
