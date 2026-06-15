@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import database as db  # Conexión con nuestro módulo de Google Sheets
+import auth as au     # Importamos tu nuevo archivo de autenticación
 
 # ==========================================
 # CONFIGURACIÓN DE LA PÁGINA Y SESIÓN
@@ -10,7 +11,7 @@ st.set_page_config(
     page_title="Consorcio San Miguel - Gestión de Almacenes",
     page_icon="📦",
     layout="wide",
-    initial_sidebar_state="collapsed" # Escondemos el sidebar para usar el menú premium superior
+    initial_sidebar_state="collapsed" # Escondemos el sidebar para la vista móvil/premium
 )
 
 # INYECCIÓN DE CSS MAESTRO CON LA PALETA DE COLORES DE LA EMPRESA (AZUL Y NARANJA)
@@ -26,7 +27,7 @@ st.markdown("""
             border-radius: 12px;
             color: white;
             margin-bottom: 25px;
-            border-bottom: 4px solid #F57C00; /* Naranja de seguridad del logo */
+            border-bottom: 4px solid #F57C00; /* Naranja de seguridad */
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         
@@ -65,13 +66,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Inicializar estados de sesión para control de login
-if "autenticado" not in st.session_state:
-    st.session_state.autenticado = False
-if "usuario_actual" not in st.session_state:
-    st.session_state.usuario_actual = None
-if "rol_actual" not in st.session_state:
-    st.session_state.rol_actual = None
+# Inicializar los estados de sesión de auth.py si no existen
+au.verificar_sesion()
+
+# Inicializar estado de navegación interna si no existe
 if "opcion_menu" not in st.session_state:
     st.session_state.opcion_menu = "📊 Dashboard"
 
@@ -90,36 +88,14 @@ if sh is None:
     st.stop()
 
 # ==========================================
-# PANTALLA DE CONTROL DE ACCESO (LOGIN)
+# RESTRICCIÓN DE ACCESO (MANDAR A LLAMAR A AUTH.PY)
 # ==========================================
-if not st.session_state.autenticado:
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("<h1 style='text-align: center; color: #0B2545; font-weight:800;'>CONSORCIO SAN MIGUEL</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #6B7280; font-size: 16px; margin-top:-10px;'>Sistema de Control de Inventarios — Obra 'Nueva Rinconada'</p>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1, 1.3, 1])
-    with col2:
-        st.markdown("<div style='background-color: white; padding: 35px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border-top: 5px solid #F57C00;'>", unsafe_allow_html=True)
-        with st.form("formulario_login"):
-            st.markdown("<h4 style='color:#0B2545; margin-top:0px;'>Iniciar Sesión Administrativa</h4>", unsafe_allow_html=True)
-            usuario = st.text_input("👤 Usuario Logístico")
-            contrasena = st.text_input("🔑 Contraseña", type="password")
-            st.markdown("<br>", unsafe_allow_html=True)
-            btn_ingresar = st.form_submit_button("INGRESAR AL PANEL", use_container_width=True)
-            
-            if btn_ingresar:
-                if usuario.lower() == "larry" and contrasena == "admin123":
-                    st.session_state.autenticado = True
-                    st.session_state.usuario_actual = "Larry Frank Rodriguez"
-                    st.session_state.rol_actual = "Jefe de Almacenes"
-                    st.rerun()
-                else:
-                    st.error("❌ Credenciales inválidas.")
-        st.markdown("</div>", unsafe_allow_html=True)
-    st.stop()
+if not st.session_state.logged_in:
+    au.login_form()  # Despliega tu formulario multiusuario personalizado
+    st.stop()        # Detiene la renderización de la app si no se ha logueado nadie
 
 # ==========================================
-# CABECERA CORPORATIVA PREMIUM
+# CABECERA CORPORATIVA PREMIUM (DINÁMICA)
 # ==========================================
 st.markdown(f"""
     <div class="header-container">
@@ -130,8 +106,8 @@ st.markdown(f"""
                     <p style="margin:0; opacity:0.8; font-size:14px;">📦 Gestión Integral de Almacenes Saneamiento</p>
                 </td>
                 <td style="text-align:right; border:none; background:none; padding:0; vertical-align:middle;">
-                    <span style="font-size:14px; font-weight:600; background:rgba(255,255,255,0.15); padding:8px 15px; border-radius:20px;">
-                        🦺 {st.session_state.usuario_actual} ({st.session_state.rol_actual})
+                    <span style="font-size:13px; font-weight:600; background:rgba(255,255,255,0.15); padding:8px 15px; border-radius:20px;">
+                        🦺 {st.session_state.username} — <code style="color:#FFCC80;">[{st.session_state.user_role}]</code>
                     </span>
                 </td>
             </tr>
@@ -142,18 +118,17 @@ st.markdown(f"""
 # ==========================================
 # MENÚ DE NAVEGACIÓN TOTALMENTE RESPONSIVO
 # ==========================================
-# El componente st.segmented_control se adapta automáticamente convirtiéndose en bloques compactos en teléfonos.
-opciones_menu = {
-    "📊 Dashboard": "📊 Dashboard",
-    "📖 Reporte Stock": "📖 Reporte Stock",
-    "🔄 Movimientos": "🔄 Movimientos",
-    "⚙️ Ajustes": "⚙️ Ajustes"
-}
+opciones_menu = [
+    "📊 Dashboard",
+    "📖 Reporte Stock",
+    "🔄 Movimientos",
+    "⚙️ Ajustes"
+]
 
-# Renderizamos el menú superior horizontal
+# Menú superior horizontal auto-ajustable para celulares
 opcion_seleccionada = st.segmented_control(
     "Navegación del Sistema",
-    options=list(opciones_menu.keys()),
+    options=opciones_menu,
     default="📊 Dashboard",
     label_visibility="collapsed"
 )
@@ -191,7 +166,7 @@ if st.session_state.opcion_menu == "📊 Dashboard":
             
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Gráficos responsivos de Streamlit
+        # Gráficos responsivos
         col_g1, col_g2 = st.columns(2)
         with col_g1:
             st.markdown("##### **📊 Actividad por Almacén**")
@@ -203,7 +178,7 @@ if st.session_state.opcion_menu == "📊 Dashboard":
                 st.line_chart(df_historial['Fecha'].value_counts().sort_index(), color="#F57C00")
 
 # ==========================================
-# MÓDULO 2: REPORTE DE STOCK ACTUAL (CON ALERTAS)
+# MÓDULO 2: REPORTE DE STOCK ACTUAL
 # ==========================================
 elif st.session_state.opcion_menu == "📖 Reporte Stock":
     try:
@@ -230,52 +205,55 @@ elif st.session_state.opcion_menu == "📖 Reporte Stock":
     materiales_criticos = df_filtrado[df_filtrado['Stock'].astype(int) <= 5]
     if not materiales_criticos.empty:
         st.error(f"🚨 **Stock Crítico Detectado (≤ 5 unidades):** Existen {len(materiales_criticos)} artículos en riesgo de quiebre. Revise la lista expandible.")
-        with st.expander("⚠️ Ver Lista Critica"):
+        with st.expander("⚠️ Ver Lista Crítica"):
             st.table(materiales_criticos[['Almacén', 'Código', 'Material', 'Stock']])
             
     st.dataframe(df_filtrado, use_container_width=True, hide_index=True)
     
-    # Descarga directa compatible
     csv = df_filtrado.to_csv(index=False, sep=';').encode('utf-8-sig')
     st.download_button("🟢 DESCARGAR REPORTE EXCEL", data=csv, file_name="Stock_Consorcio.csv", mime="text/csv")
 
-    # PANEL CRUD DE EDICIÓN RÁPIDA
+    # PANEL CRUD DE EDICIÓN RÁPIDA (RESTRINGIDO SOLO A ROLES ADMINISTRADORES)
     st.markdown("---")
     st.markdown("### 🛠️ PANEL DE CORRECCIÓN LOGÍSTICA IN SITU")
-    almacen_crud_sel = st.selectbox("1. Seleccione Almacén a modificar:", ["Almacén 1", "Almacén 6", "Almacén 8", "Almacén 10"])
-    materiales_en_almacen = df_inv[df_inv['Almacén'].astype(str) == almacen_crud_sel]
     
-    if not materiales_en_almacen.empty:
-        opciones_combo = materiales_en_almacen['Código'].astype(str) + " - " + materiales_en_almacen['Material'].astype(str)
-        material_crud = st.selectbox("2. Seleccione el Material a modificar:", options=opciones_combo)
-        
-        codigo_seleccionado = material_crud.split(" - ")[0]
-        datos_material = materiales_en_almacen[materiales_en_almacen['Código'].astype(str) == codigo_seleccionado].iloc[0]
-        
-        with st.form("form_edicion_rapida"):
-            col_e1, col_e2, col_e3 = st.columns(3)
-            with col_e1:
-                nuevo_stock = st.number_input("Stock Real:", value=int(datos_material['Stock']), min_value=0)
-            with col_e2:
-                nueva_ubica = st.text_input("Ubicación Interna:", value=str(datos_material['Ubicación']))
-            with col_e3:
-                nuevo_encargado = st.text_input("Custodio:", value=str(datos_material['Encargado']))
-                
-            if st.form_submit_button("💾 GUARDAR CAMBIOS EN LA NUBE"):
-                todos_los_datos = ws_inv.get_all_records()
-                fila_editar = None
-                for idx, fila in enumerate(todos_los_datos):
-                    if str(fila['Almacén']) == almacen_crud_sel and str(fila['Código']) == codigo_seleccionado:
-                        fila_editar = idx + 2
-                        break
-                if fila_editar:
-                    ws_inv.update_cell(fila_editar, 5, nuevo_stock)
-                    ws_inv.update_cell(fila_editar, 4, nueva_ubica)
-                    ws_inv.update_cell(fila_editar, 7, nuevo_encargado)
-                    st.success("✔️ Ficha actualizada.")
-                    st.rerun()
+    if st.session_state.user_role != "Administrador":
+        st.warning("⚠️ Su rol de Supervisor (SEDAPAL) tiene permisos de 'Solo Lectura'. El panel de modificaciones físicas está deshabilitado.")
     else:
-        st.info("Sin registros en esta sede.")
+        almacen_crud_sel = st.selectbox("1. Seleccione Almacén a modificar:", ["Almacén 1", "Almacén 6", "Almacén 8", "Almacén 10"])
+        materiales_en_almacen = df_inv[df_inv['Almacén'].astype(str) == almacen_crud_sel]
+        
+        if not materiales_en_almacen.empty:
+            opciones_combo = materiales_en_almacen['Código'].astype(str) + " - " + materiales_en_almacen['Material'].astype(str)
+            material_crud = st.selectbox("2. Seleccione el Material a modificar:", options=opciones_combo)
+            
+            codigo_seleccionado = material_crud.split(" - ")[0]
+            datos_material = materiales_en_almacen[materiales_en_almacen['Código'].astype(str) == codigo_seleccionado].iloc[0]
+            
+            with st.form("form_edicion_rapida"):
+                col_e1, col_e2, col_e3 = st.columns(3)
+                with col_e1:
+                    nuevo_stock = st.number_input("Stock Real:", value=int(datos_material['Stock']), min_value=0)
+                with col_e2:
+                    nueva_ubica = st.text_input("Ubicación Interna:", value=str(datos_material['Ubicación']))
+                with col_e3:
+                    nuevo_encargado = st.text_input("Custodio:", value=str(datos_material['Encargado']))
+                    
+                if st.form_submit_button("💾 GUARDAR CAMBIOS EN LA NUBE"):
+                    todos_los_datos = ws_inv.get_all_records()
+                    fila_editar = None
+                    for idx, fila in enumerate(todos_los_datos):
+                        if str(fila['Almacén']) == almacen_crud_sel and str(fila['Código']) == codigo_seleccionado:
+                            fila_editar = idx + 2
+                            break
+                    if fila_editar:
+                        ws_inv.update_cell(fila_editar, 5, nuevo_stock)
+                        ws_inv.update_cell(fila_editar, 4, nueva_ubica)
+                        ws_inv.update_cell(fila_editar, 7, nuevo_encargado)
+                        st.success("✔️ Ficha actualizada.")
+                        st.rerun()
+        else:
+            st.info("Sin registros en esta sede.")
 
 # ==========================================
 # MÓDULO 3: REGISTRAR MOVIMIENTO
@@ -283,69 +261,72 @@ elif st.session_state.opcion_menu == "📖 Reporte Stock":
 elif st.session_state.opcion_menu == "🔄 Movimientos":
     st.markdown("### 🔄 REGISTRO MULTI-RECURSO DE MOVIMIENTOS")
     
-    with st.form("form_cabecera"):
-        col_c1, col_c2 = st.columns(2)
-        with col_c1:
-            tipo_mov = st.selectbox("Tipo Logístico:", ["Ingreso (Guía de Remisión)", "Egreso (Vale de Salida)"])
-            almacen_sel = st.selectbox("Almacén de Operación:", ["Almacén 1", "Almacén 6", "Almacén 8", "Almacén 10"])
-        with col_c2:
-            num_doc = st.text_input("Número de Documento Oficial")
-            fecha_sel = st.date_input("Fecha", value=datetime.now().date())
+    if st.session_state.user_role != "Administrador":
+        st.error("🚫 Acceso Denegado: Los usuarios de Supervisión externa no están autorizados a emitir vales ni guías de ingreso.")
+    else:
+        with st.form("form_cabecera"):
+            col_c1, col_c2 = st.columns(2)
+            with col_c1:
+                tipo_mov = st.selectbox("Tipo Logístico:", ["Ingreso (Guía de Remisión)", "Egreso (Vale de Salida)"])
+                almacen_sel = st.selectbox("Almacén de Operación:", ["Almacén 1", "Almacén 6", "Almacén 8", "Almacén 10"])
+            with col_c2:
+                num_doc = st.text_input("Número de Documento Oficial")
+                fecha_sel = st.date_input("Fecha", value=datetime.now().date())
+                
+            col_p1, col_p2 = st.columns(2)
+            with col_p1:
+                solicitante = st.text_input("Solicitante / Cuadrilla:")
+            with col_p2:
+                supervisor = st.text_input("Ing. Supervisor / Residente:")
+                
+            observaciones = st.text_area("Observaciones del Destino:")
+            st.form_submit_button("🔒 Confirmar Cabecera")
             
-        col_p1, col_p2 = st.columns(2)
-        with col_p1:
-            solicitante = st.text_input("Solicitante / Cuadrilla:")
-        with col_p2:
-            supervisor = st.text_input("Ing. Supervisor / Residente:")
+        if "canasta" not in st.session_state:
+            st.session_state.canasta = []
             
-        observaciones = st.text_area("Observaciones del Destino:")
-        st.form_submit_button("🔒 Confirmar Cabecera")
-        
-    if "canasta" not in st.session_state:
-        st.session_state.canasta = []
-        
-    st.markdown("---")
-    st.markdown("##### **📦 Agregar Insumos al Documento Abierto**")
-    df_maestro = st.session_state.maestro_materiales
-    col_mat1, col_mat2 = st.columns([3, 1])
-    with col_mat1:
-        seleccion_combo = st.selectbox("Material Técnico:", options=df_maestro['Código'] + " - " + df_maestro['Material'])
-    with col_mat2:
-        cantidad_item = st.number_input("Cantidad:", min_value=1, value=1)
-        
-    if st.button("➕ Añadir a la lista", use_container_width=True):
-        cod_item = seleccion_combo.split(" - ")[0]
-        nom_item = seleccion_combo.split(" - ")[1]
-        uni_item = df_maestro[df_maestro['Código'] == cod_item]['Unidad'].values[0]
-        
-        st.session_state.canasta.append({
-            "Código": cod_item, "Material": nom_item, "Cantidad": cantidad_item, "Unidad": uni_item
-        })
-        st.toast(f"✔️ Agregado: {nom_item}")
-        
-    if st.session_state.canasta:
-        st.markdown("#### Items a Procesar")
-        df_canasta = pd.DataFrame(st.session_state.canasta)
-        st.dataframe(df_canasta, use_container_width=True)
-        
-        col_acc1, col_acc2 = st.columns(2)
-        with col_acc1:
-            if st.button("🧼 Vaciar Todo", use_container_width=True):
-                st.session_state.canasta = []
-                st.rerun()
-        with col_acc2:
-            if st.button("🚀 ENVIAR TRANSACCIÓN A GOOGLE SHEETS", type="primary", use_container_width=True):
-                if not num_doc or not solicitante or not supervisor:
-                    st.error("❌ Faltan datos en la cabecera.")
-                else:
-                    exito, msg = db.registrar_transaccion(
-                        tipo_mov, num_doc, almacen_sel, fecha_sel, solicitante, supervisor, st.session_state.usuario_actual, observaciones, st.session_state.canasta
-                    )
-                    if exito:
-                        st.success(msg)
-                        st.session_state.canasta = []
+        st.markdown("---")
+        st.markdown("##### **📦 Agregar Insumos al Documento Abierto**")
+        df_maestro = st.session_state.maestro_materiales
+        col_mat1, col_mat2 = st.columns([3, 1])
+        with col_mat1:
+            seleccion_combo = st.selectbox("Material Técnico:", options=df_maestro['Código'] + " - " + df_maestro['Material'])
+        with col_mat2:
+            cantidad_item = st.number_input("Cantidad:", min_value=1, value=1)
+            
+        if st.button("➕ Añadir a la lista", use_container_width=True):
+            cod_item = seleccion_combo.split(" - ")[0]
+            nom_item = seleccion_combo.split(" - ")[1]
+            uni_item = df_maestro[df_maestro['Código'] == cod_item]['Unidad'].values[0]
+            
+            st.session_state.canasta.append({
+                "Código": cod_item, "Material": nom_item, "Cantidad": cantidad_item, "Unidad": uni_item
+            })
+            st.toast(f"✔️ Agregado: {nom_item}")
+            
+        if st.session_state.canasta:
+            st.markdown("#### Items a Procesar")
+            df_canasta = pd.DataFrame(st.session_state.canasta)
+            st.dataframe(df_canasta, use_container_width=True)
+            
+            col_acc1, col_acc2 = st.columns(2)
+            with col_acc1:
+                if st.button("🧼 Vaciar Todo", use_container_width=True):
+                    st.session_state.canasta = []
+                    st.rerun()
+            with col_acc2:
+                if st.button("🚀 ENVIAR TRANSACCIÓN A GOOGLE SHEETS", type="primary", use_container_width=True):
+                    if not num_doc or not solicitante or not supervisor:
+                        st.error("❌ Faltan datos en la cabecera.")
                     else:
-                        st.error(msg)
+                        exito, msg = db.registrar_transaccion(
+                            tipo_mov, num_doc, almacen_sel, fecha_sel, solicitante, supervisor, st.session_state.username, observaciones, st.session_state.canasta
+                        )
+                        if exito:
+                            st.success(msg)
+                            st.session_state.canasta = []
+                        else:
+                            st.error(msg)
 
 # ==========================================
 # MÓDULO 4: CONFIGURACIÓN DE ALMACENES
@@ -353,31 +334,34 @@ elif st.session_state.opcion_menu == "🔄 Movimientos":
 elif st.session_state.opcion_menu == "⚙️ Ajustes":
     st.markdown("### ⚙️ PANEL DE CONFIGURACIÓN Y CATÁLOGOS TÉCNICOS")
     
-    with st.form("form_nuevo_material"):
-        col_n1, col_n2, col_n3 = st.columns(3)
-        with col_n1:
-            nuevo_cod = st.text_input("Código de Inventario Único:")
-        with col_n2:
-            nuevo_nom = st.text_input("Descripción Completa:")
-        with col_n3:
-            nueva_uni = st.selectbox("Unidad Oficial:", ["Metros", "Unidades", "Varillas", "Global"])
-            
-        if st.form_submit_button("💾 Registrar Alta de Material"):
-            if nuevo_cod and nuevo_nom:
-                nuevo_row = {"Código": nuevo_cod, "Material": nuevo_nom, "Unidad": nueva_uni}
-                st.session_state.maestro_materiales = pd.concat([st.session_state.maestro_materiales, pd.DataFrame([nuevo_row])], ignore_index=True)
-                st.success("✔️ Insumo agregado.")
-            else:
-                st.error("❌ Complete los campos.")
+    if st.session_state.user_role != "Administrador":
+        st.error("🚫 Acceso Denegado: No tiene privilegios para alterar el Catálogo Maestro de Materiales.")
+    else:
+        with st.form("form_nuevo_material"):
+            col_n1, col_n2, col_n3 = st.columns(3)
+            with col_n1:
+                nuevo_cod = st.text_input("Código de Inventario Único:")
+            with col_n2:
+                nuevo_nom = st.text_input("Descripción Completa:")
+            with col_n3:
+                nueva_uni = st.selectbox("Unidad Oficial:", ["Metros", "Unidades", "Varillas", "Global"])
                 
-    st.dataframe(st.session_state.maestro_materiales, use_container_width=True, hide_index=True)
+            if st.form_submit_button("💾 Registrar Alta de Material"):
+                if nuevo_cod and nuevo_nom:
+                    nuevo_row = {"Código": nuevo_cod, "Material": nuevo_nom, "Unidad": nueva_uni}
+                    st.session_state.maestro_materiales = pd.concat([st.session_state.maestro_materiales, pd.DataFrame([nuevo_row])], ignore_index=True)
+                    st.success("✔️ Insumo agregado.")
+                else:
+                    st.error("❌ Complete los campos.")
+                    
+        st.dataframe(st.session_state.maestro_materiales, use_container_width=True, hide_index=True)
 
 # ==========================================
-# BOTÓN DE CIERRE DE SESIÓN EN PARTE INFERIOR PARA MÓVILES
+# BOTÓN DE CIERRE DE SESIÓN EN PARTE INFERIOR (COMPATIBLE CON MÓVILES)
 # ==========================================
 st.markdown("<br><hr>", unsafe_allow_html=True)
 if st.button("🚪 Salir de Cuenta", key="btn_salir_movil"):
-    st.session_state.autenticado = False
-    st.session_state.usuario_actual = None
-    st.session_state.rol_actual = None
+    st.session_state.logged_in = False
+    st.session_state.user_role = None
+    st.session_state.username = ""
     st.rerun()
