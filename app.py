@@ -33,26 +33,31 @@ else:
             st.session_state.logged_in = False
             st.rerun()
 
-    # --- 1. DASHBOARD PROFESIONAL GERENCIAL ---
+   # --- 1. DASHBOARD PROFESIONAL GERENCIAL ---
     if opcion == "📊 Dashboard Gerencial":
         st.markdown("<h2 style='color:#1E3A8A; font-weight:800;'>📊 DASHBOARD CORPORATIVO DE MOVIMIENTOS</h2>", unsafe_allow_html=True)
         st.markdown("---")
         
         df_hist = st.session_state.historial_movimientos.copy()
-        df_hist['Fecha'] = pd.to_datetime(df_hist['Fecha'])
-        df_hist['Mes'] = df_hist['Fecha'].dt.strftime('%Y-%m')
-        df_hist['Día'] = df_hist['Fecha'].dt.strftime('%Y-%m-%d')
+        
+        # Corrección del error: Convertir a fecha y asegurar la creación de columnas de tiempo
+        df_hist['Fecha_DT'] = pd.to_datetime(df_hist['Fecha'], errors='coerce')
+        df_hist['Mes'] = df_hist['Fecha_DT'].dt.strftime('%Y-%m').fillna(df_hist['Fecha'].str[:7])
+        df_hist['Día'] = df_hist['Fecha_DT'].dt.strftime('%Y-%m-%d').fillna(df_hist['Fecha'])
         
         # Filtros de configuración interactiva solicitados
         st.markdown("### 🎛️ Filtros de Análisis Gerencial")
         col_f1, col_f2, col_f3 = st.columns(3)
         
         with col_f1:
-            filtro_mes = st.multiselect("Filtrar por Mes de Salida:", options=df_hist['Mes'].unique().tolist(), default=df_hist['Mes'].unique().tolist())
+            meses_disp = df_hist['Mes'].unique().tolist()
+            filtro_mes = st.multiselect("Filtrar por Mes de Salida:", options=meses_disp, default=meses_disp)
         with col_f2:
-            filtro_dia = st.multiselect("Filtrar por Día Específico:", options=df_hist['Día'].unique().tolist(), default=df_hist['Día'].unique().tolist())
+            dias_disp = df_hist['Día'].unique().tolist()
+            filtro_dia = st.multiselect("Filtrar por Día Específico:", options=dias_disp, default=dias_disp)
         with col_f3:
-            filtro_sup = st.multiselect("Filtrar por Supervisor Solicitante:", options=df_hist['Supervisor'].unique().tolist(), default=df_hist['Supervisor'].unique().tolist())
+            sups_disp = df_hist['Supervisor'].unique().tolist()
+            filtro_sup = st.multiselect("Filtrar por Supervisor Solicitante:", options=sups_disp, default=sups_disp)
             
         # Aplicación de los filtros al dataframe del Dashboard
         df_dash = df_hist[
@@ -67,9 +72,9 @@ else:
         with kpi1:
             st.metric("Total Recursos Despachados (Filtrado)", int(df_dash['Cantidad'].sum()) if not df_dash.empty else 0)
         with kpi2:
-            st.metric("Transacciones / Vales Atendidos", len(df_dash['Documento'].unique()))
+            st.metric("Transacciones / Vales Atendidos", len(df_dash['Documento'].unique()) if not df_dash.empty else 0)
         with kpi3:
-            st.metric("Supervisores Activos en Frentes", len(df_dash['Supervisor'].unique()))
+            st.metric("Supervisores Activos en Frentes", len(df_dash['Supervisor'].unique()) if not df_dash.empty else 0)
             
         st.markdown("---")
         
