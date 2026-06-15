@@ -20,7 +20,7 @@ if "usuario_actual" not in st.session_state:
 if "rol_actual" not in st.session_state:
     st.session_state.rol_actual = None
 
-# Cargar catálogo maestro temporal si no existe en sesión (Módulo 4)
+# Cargar catálogo maestro si no existe en sesión (Módulo 4)
 if "maestro_materiales" not in st.session_state:
     st.session_state.maestro_materiales = pd.DataFrame([
         {"Código": "HID-PO-01", "Material": "Tubo Polietileno 110mm Pn10", "Unidad": "Metros"},
@@ -40,7 +40,7 @@ if sh is None:
 # ==========================================
 if not st.session_state.autenticado:
     st.markdown("<h1 style='text-align: center;'>🔐 CONTROL DE ACCESO LOGÍSTICO</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: gray;'>Megaproyecto Sectorial Saneamiento 'Nueva Rinconada'</p>", unsafe_allow_html=True)
+    st.markdown
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
