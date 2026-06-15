@@ -4,7 +4,7 @@ import numpy as np
 
 # 1. CONFIGURACIÓN DE LA PÁGINA (Título e Icono en la pestaña del navegador)
 st.set_page_config(
-    page_title="Consorcio San Miguel - Gestión de Almacenes",
+    page_title="Consorcio San Miguel - Gestión de Almacenes Externos",
     page_icon="🏗️",
     layout="wide"
 )
@@ -39,7 +39,7 @@ def login():
     
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
-        st.info("💡 **Credenciales de prueba para clase:**\n- Admin (Tú): `daniel` / `admin123`\n- Supervisor (Jefe/SEDAPAL): `supervisor` / `super123`")
+        st.info("💡 **Credenciales de prueba para clase:**\n- Admin (Tú): `larry` / `admin123`\n- Supervisor (Jefe/SEDAPAL): `supervisor` / `super123`")
         with st.form("Formulario de Login"):
             st.markdown("### 🔐 Ingreso al Sistema")
             usuario = st.text_input("Usuario")
