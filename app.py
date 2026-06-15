@@ -116,19 +116,18 @@ else:
             
         st.dataframe(df_show, use_container_width=True, hide_index=True)
         
-        # 🟢 MOTOR DE EXPORTACIÓN EXCEL SOLICITADO
+      # 🟢 MOTOR DE EXPORTACIÓN EN FORMATO COMPATIBLE CON EXCEL (NATIVO - SIN LIBRERÍAS)
         st.markdown("### 📥 Panel de Descargas de Reportes Oficiales")
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-            df_show.to_excel(writer, sheet_name='Stock_Actual', index=False)
+        
+        # Convertimos el DataFrame filtrado a formato CSV codificado para Excel en Perú (UTF-8 con BOM y punto y coma)
+        csv_data = df_show.to_csv(index=False, sep=';').encode('utf-8-sig')
             
         st.download_button(
-            label="🟢 Descargar Reporte de Stock en Formato EXCEL (.xlsx)",
-            data=buffer.getvalue(),
-            file_name=f"Reporte_Stock_Consorcio_San_Miguel_{datetime.now().strftime('%Y%m%d')}.xlsx",
-            mime="application/vnd.ms-excel"
+            label="🟢 Descargar Reporte de Stock para EXCEL (.csv)",
+            data=csv_data,
+            file_name=f"Reporte_Stock_Consorcio_San_Miguel.csv",
+            mime="text/csv"
         )
-
     # --- 3. REGISTRAR MOVIMIENTOS (TRANSACCIONES MULTI-RECURSO) ---
     elif opcion == "🔄 Registrar Movimiento (Guías/Vales)":
         st.markdown("<h2 style='color:#1E3A8A;'>🔄 REGISTRO DE MOVIMIENTOS LOGÍSTICOS MULTI-RECURSO</h2>", unsafe_allow_html=True)
