@@ -9,11 +9,12 @@ except ModuleNotFoundError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "gspread"])
     import gspread
 def conectar_sheets():
-    """Establece conexión con la hoja de cálculo usando los secretos seguros de Streamlit."""
+    """Establece conexión con la hoja de cálculo usando el JSON directo de los secretos."""
     try:
-        # Autenticación nativa utilizando los secretos TOML guardados en la nube
-        credenciales = dict(st.secrets["gspread"])
-        gc = gspread.service_account_from_dict(credenciales)
+        import json
+        # Leemos el JSON completo estructurado directamente desde los secretos
+        credenciales_dict = json.loads(st.secrets["google_sheets_json"])
+        gc = gspread.service_account_from_dict(credenciales_dict)
         
         # Abrir el libro por su nombre exacto
         sh = gc.open("Inventario Consorcio San Miguel")
