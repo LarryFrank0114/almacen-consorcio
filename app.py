@@ -3,6 +3,7 @@ import database as db
 import auth
 import pandas as pd
 import io
+import datetime
 
 # Configuración inicial del portal
 st.set_page_config(page_title="Consorcio San Miguel - Sistema Logístico", page_icon="🏗️", layout="wide")
@@ -147,12 +148,13 @@ else:
                 with col_m1:
                     almacen_sel = st.selectbox("Seleccione el Almacén de Operación:", ["Almacén 1", "Almacén 6", "Almacén 8", "Almacén 10"])
                     doc_ref = st.text_input("Número de Documento (Ej: GR-001-2045 o V-084)").upper().strip()
-                    fecha_sel = st.date_input("Fecha de Operación", value=datetime.now())
+                    fecha_sel = st.date_input("Fecha de Operación", value=datetime.date.today())
                 with col_m2:
                     solicitante_sel = st.text_input("Nombre del Solicitante / Cuadrilla")
                     supervisor_sel = st.text_input("Supervisor que Autoriza (Ej: Ing. Marcos Silva)")
                     obs_sel = st.text_area("Observaciones o Destino del Frente de Obra")
-                
+
+                procesar_cabecera = st.form_submit_button("Confirmar Datos de Cabecera")
                 encargado_auto = encargados_dict[almacen_sel]
                 st.info(f"📋 **Responsable Técnico Custodio:** {encargado_auto}")
                 
