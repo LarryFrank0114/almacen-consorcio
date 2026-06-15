@@ -250,3 +250,41 @@ elif opcion_menu == "🔄 Registrar Movimiento (Guías/Vales)":
                 if not num_doc or not solicitante or not supervisor:
                     st.error("❌ Por favor, rellene todos los campos obligatorios de la cabecera antes de procesar.")
                 else:
+                    exito, msg = db.registrar_transaccion(
+                        tipo_mov, num_doc, almacen_sel, fecha_sel, solicitante, supervisor, encargado, observaciones, st.session_state.canasta
+                    )
+                    if exito:
+                        st.success(msg)
+                        st.session_state.canasta = []
+                    else:
+                        st.error(msg)
+
+# ==========================================
+# MÓDULO 4: CONFIGURACIÓN DE ALMACENES
+# ==========================================
+elif opcion_menu == "⚙️ Configurar Almacenes (1, 6, 8, 10)":
+    st.markdown("# ⚙️ PANEL DE CONFIGURACIÓN CORPORATIVA Y CATÁLOGOS")
+    st.markdown("---")
+    
+    st.markdown("### 📝 Registrar Nuevo Material en el Catálogo Técnico")
+    with st.form("form_nuevo_material"):
+        col_n1, col_n2, col_n3 = st.columns(3)
+        with col_n1:
+            nuevo_cod = st.text_input("Código de Inventario (Ej: HID-PO-02):")
+        with col_n2:
+            nuevo_nom = st.text_input("Descripción Completa del Material:")
+        with col_n3:
+            nueva_uni = st.selectbox("Unidad de Medida Oficial:", ["Metros", "Unidades", "Varillas", "Global"])
+            
+        btn_crear_mat = st.form_submit_button("💾 Dar de Alta en Catálogo Maestro")
+        
+        if btn_crear_mat:
+            if nuevo_cod and nuevo_nom:
+                nuevo_row = {"Código": nuevo_cod, "Material": nuevo_nom, "Unidad": nueva_uni}
+                st.session_state.maestro_materiales = pd.concat([st.session_state.maestro_materiales, pd.DataFrame([nuevo_row])], ignore_index=True)
+                st.success(f"✔️ Material {nuevo_nom} dado de alta con éxito.")
+            else:
+                st.error("❌ Rellene los campos obligatorios del material.")
+                
+    st.markdown("### 📋 Catálogo Maestro de Materiales de Saneamiento Autorizados")
+    st.dataframe(st.session_state.maestro_materiales, use_container_width=True, hide_index=True)
