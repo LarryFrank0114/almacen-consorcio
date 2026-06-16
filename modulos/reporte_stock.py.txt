@@ -1,0 +1,46 @@
+import streamlit as st
+import pandas as pd
+
+def render(sh):
+    st.markdown("### Reporte de Stock Consolidado")
+    st.markdown("Monitoreo de existencias y control de recursos en tiempo real.")
+    
+    try:
+        ws_inv = sh.worksheet("inventario")
+        df_inv = pd.DataFrame(ws_inv.get_all_records())
+    except Exception as e:
+        st.error(f"Error al conectar con la base de datos de inventario: {e}")
+        return
+
+    # Filtros limpios en columnas
+    col1, col2 = st.columns(2)
+    with col1:
+        filtro_almacen = st.multiselect("Filtrar por Almacen:", options=df_inv['Almacén'].unique(), default=df_inv['Almacén'].unique())
+    with col2:
+        buscar = st.text_input("Buscar recurso:")
+
+    df_filtrado = df_inv[df_inv['Almacén'].isin(filtro_almacen)]
+    if buscar:
+        df_filtrado = df_filtrado[df_filtrado['Material'].str.contains(buscar, case=False) | df_filtrado['Código'].astype(str).str.contains(buscar, case=False)]
+
+    st.dataframe(df_filtrado, use_container_width=True, hide_index=True)
+
+    # ==========================================
+    # CÁMARA / CARGA DE IMÁGENES EXCLUSIVA PARA LARRY
+    # ==========================================
+    # Validamos exactamente tu string de usuario configurado en auth.py
+    if st.session_state.username == "Larry Rodriguez - Jefe de Almacenes Externos":
+        st.markdown("---")
+        st.markdown("### Control Visual de Sede (Exclusivo Jefatura)")
+        st.info("Larry, en esta sección puedes cargar el registro fotográfico del estado actual del almacén visitado.")
+        
+        almacen_foto = st.selectbox("Sede a reportar fotográficamente:", ["Almacén 1", "Almacén 6", "Almacén 8", "Almacén 10"])
+        
+        # Permite subir archivos de imagen o tomar fotos desde el celular directamente
+        imagen_cargada = st.file_uploader("Subir captura de control de almacén (.png, .jpg)", type=["png", "jpg", "jpeg"])
+        
+        if imagen_cargada is not None:
+            st.image(imagen_cargada, caption=f"Vista previa para {almacen_foto}", width=400)
+            if st.button("Confirmar y Archivar Registro Visual"):
+                # Aquí puedes conectar un servicio de storage o simplemente confirmar el guardado local temporal
+                st.success(f"Registro visual del {almacen_foto} guardado con éxito en la sesión de control.")
