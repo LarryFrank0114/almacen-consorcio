@@ -1,9 +1,19 @@
 import streamlit as st
+import sys
+import os
+
+# Forzamos a Python a reconocer la carpeta raíz en Streamlit Cloud
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import auth as au     
 import database as db  
+
+# Importamos las vistas desde nuestra carpeta organizada
 from modulos import dashboard, reporte_stock, movimientos, ajustes
 
-# Configuración premium minimalista
+# ==========================================
+# CONFIGURACIÓN DE LA PÁGINA Y ESTILOS MINIMALISTAS
+# ==========================================
 st.set_page_config(
     page_title="Consorcio San Miguel",
     page_icon="📦",
@@ -11,10 +21,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS Minimalista: Botones grandes y redondeados con la paleta oficial (Azul y Naranja)
+# Estilos CSS Minimalistas sin íconos y con botones grandes redondeados
 st.markdown("""
     <style>
         .block-container { padding-top: 2rem; padding-bottom: 2rem; }
+        
+        /* Cabecera limpia corporativa */
         .header-minimal {
             background-color: #0B2545;
             padding: 20px 30px;
@@ -29,6 +41,7 @@ st.markdown("""
         .header-title { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
         .header-user { font-size: 13px; opacity: 0.9; font-weight: 500; }
         
+        /* Botones grandes y rectangulares con bordes redondeados */
         div.stButton > button {
             background-color: #F57C00 !important;
             color: white !important;
@@ -38,9 +51,13 @@ st.markdown("""
             padding: 0.6rem 2rem !important;
             font-size: 15px !important;
             width: 100%;
+            transition: all 0.2s ease;
         }
-        div.stButton > button:hover { background-color: #E65100 !important; }
+        div.stButton > button:hover {
+            background-color: #E65100 !important;
+        }
         
+        /* Bloques de navegación grandes tipo tablero moderno */
         div[data-testid="stSegmentedControl"] button {
             padding: 12px 24px !important;
             font-size: 15px !important;
@@ -58,18 +75,22 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Validación de seguridad
 au.verificar_sesion()
 
 if not st.session_state.logged_in:
     au.login_form()
     st.stop()
 
+# Conectar base de datos central
 sh = db.conectar_sheets()
 if sh is None:
-    st.error("Error al conectar con Google Sheets.")
+    st.error("Error al conectar con la base de datos.")
     st.stop()
 
-# Cabecera minimalista
+# ==========================================
+# RENDERS DE LA INTERFAZ MINIMALISTA
+# ==========================================
 st.markdown(f"""
     <div class="header-minimal">
         <div class="header-title">CONSORCIO SAN MIGUEL</div>
@@ -77,13 +98,19 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# Menú superior horizontal
+# Menú horizontal limpio sin íconos en los títulos
 opciones_menu = ["Dashboard", "Reporte Stock", "Movimientos", "Ajustes"]
-opcion_seleccionada = st.segmented_control("Menu Navegacion", options=opciones_menu, default="Dashboard", label_visibility="collapsed")
+
+opcion_seleccionada = st.segmented_control(
+    "Menu Navegacion",
+    options=opciones_menu,
+    default="Dashboard",
+    label_visibility="collapsed"
+)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Enrutador de módulos
+# Enrutador dinámico hacia los archivos de la carpeta
 if opcion_seleccionada == "Dashboard":
     dashboard.render(sh)
 elif opcion_seleccionada == "Reporte Stock":
@@ -93,7 +120,7 @@ elif opcion_seleccionada == "Movimientos":
 elif opcion_seleccionada == "Ajustes":
     ajustes.render(sh)
 
-# Botón de salir al final de la pantalla
+# Botón de desconexión elegante
 st.markdown("<br><hr>", unsafe_allow_html=True)
 col_out1, col_out2, col_out3 = st.columns([1, 1, 1])
 with col_out2:
