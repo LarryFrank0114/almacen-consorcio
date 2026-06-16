@@ -3,7 +3,8 @@ import pandas as pd
 
 def render(sh):
     st.markdown("### Dashboard Gerencial")
-    st.markdown("Indicadores clave del flujo logístico y transacciones registradas en tiempo real.")
+    st.markdown("Indicadores analíticos del flujo logístico en tiempo real.")
+    st.markdown("---")
     
     try:
         ws_historial = sh.worksheet("historial")
@@ -32,9 +33,7 @@ def render(sh):
     col_g1, col_g2 = st.columns(2)
     with col_g1:
         st.markdown("##### **Actividad por Almacén**")
-        if 'Almacén' in df_historial.columns:
-            st.bar_chart(df_historial['Almacén'].value_counts(), color="#134074")
+        st.bar_chart(df_historial['Almacén'].value_counts(), color="#134074")
     with col_g2:
         st.markdown("##### **Frecuencia Cronológica**")
-        if 'Fecha' in df_historial.columns:
-            st.line_chart(df_historial['Fecha'].value_counts().sort_index(), color="#F57C00")
+        st.line_chart(df_historial['Fecha'].value_counts().sort_index(), color="#F57C00")
