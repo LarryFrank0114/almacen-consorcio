@@ -5,9 +5,10 @@ import database as db
 
 def render(sh):
     st.markdown("### Registro de Movimientos")
+    st.markdown("---")
     
     if st.session_state.user_role != "Administrador":
-        st.error("🚫 Acceso Denegado: Los usuarios de Supervisión externa no están autorizados a emitir vales ni guías.")
+        st.error("🚫 Acceso Denegado: Los usuarios de Supervisión externa no están autorizados a emitir movimientos.")
         return
 
     with st.form("form_cabecera"):
@@ -26,7 +27,7 @@ def render(sh):
             supervisor = st.text_input("Ing. Supervisor / Residente:")
             
         observaciones = st.text_area("Observaciones del Destino:")
-        st.form_submit_button("🔒 Confirmar Cabecera")
+        st.form_submit_button("Confirmar Cabecera")
         
     if "canasta" not in st.session_state:
         st.session_state.canasta = []
@@ -48,7 +49,7 @@ def render(sh):
         st.session_state.canasta.append({
             "Código": cod_item, "Material": nom_item, "Cantidad": cantidad_item, "Unidad": uni_item
         })
-        st.toast(f"✔️ Agregado: {nom_item}")
+        st.toast(f"Agregado: {nom_item}")
         
     if st.session_state.canasta:
         st.markdown("#### Items a Procesar")
@@ -63,7 +64,7 @@ def render(sh):
         with col_acc2:
             if st.button("🚀 ENVIAR TRANSACCIÓN A GOOGLE SHEETS", type="primary", use_container_width=True):
                 if not num_doc or not solicitante or not supervisor:
-                    st.error("❌ Faltan datos en la cabecera.")
+                    st.error("❌ Faltan datos obligatorios en la cabecera.")
                 else:
                     exito, msg = db.registrar_transaccion(
                         tipo_mov, num_doc, almacen_sel, fecha_sel, solicitante, supervisor, st.session_state.username, observaciones, st.session_state.canasta
