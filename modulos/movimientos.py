@@ -14,7 +14,9 @@ def render(sh):
     # CONTROL DE SEGURIDAD: Inicializar el maestro si no existe en la sesión
     if "maestro_materiales" not in st.session_state or st.session_state.maestro_materiales is None:
         try:
-            ws_maestro = sh.worksheet("maestro")
+            lista_hojas = [h.title for h in sh.worksheets()]
+            hoja_maestro_real = next((h for h in lista_hojas if h.strip().lower() == "maestro"), "maestro")
+            ws_maestro = sh.worksheet(hoja_maestro_real)
             st.session_state.maestro_materiales = pd.DataFrame(ws_maestro.get_all_records())
         except Exception as e:
             st.error(f"⚠️ No se pudo cargar el Catálogo Maestro desde Google Sheets: {e}")
