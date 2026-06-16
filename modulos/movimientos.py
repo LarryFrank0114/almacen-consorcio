@@ -11,6 +11,22 @@ def render(sh):
         st.error("🚫 Acceso Denegado: Los usuarios de Supervisión externa no están autorizados a emitir movimientos.")
         return
 
+    # CONTROL DE SEGURIDAD: Inicializar el maestro si no existe en la sesión
+    if "maestro_materiales" not in st.session_state or st.session_state.maestro_materiales is None:
+        try:
+            ws_maestro = sh.worksheet("maestro")
+            st.session_state.maestro_materiales = pd.DataFrame(ws_maestro.get_all_records())
+        except Exception as e:
+            st.error(f"⚠️ No se pudo cargar el Catálogo Maestro desde Google Sheets: {e}")
+            return
+
+    df_maestro = st.session_state.maestro_materiales
+
+    # Verificar que el maestro no esté vacío para evitar caídas en el selectbox
+    if df_maestro.empty:
+        st.warning("⚠️ El catálogo maestro de materiales está vacío en Google Sheets. Agrega materiales en Ajustes primero.")
+        return
+
     with st.form("form_cabecera"):
         col_c1, col_c2 = st.columns(2)
         with col_c1:
@@ -34,17 +50,23 @@ def render(sh):
         
     st.markdown("---")
     st.markdown("##### **Agregar Insumos al Documento Abierto**")
-    df_maestro = st.session_state.maestro_materiales
+    
+    # Aseguramos que los códigos y nombres sean tratados como texto string limpio
+    opciones_combo = df_maestro['Código'].astype(str) + " - " + df_maestro['Material'].astype(str)
+    
     col_mat1, col_mat2 = st.columns([3, 1])
     with col_mat1:
-        seleccion_combo = st.selectbox("Material Técnico:", options=df_maestro['Código'] + " - " + df_maestro['Material'])
+        seleccion_combo = st.selectbox("Material Técnico:", options=opciones_combo)
     with col_mat2:
         cantidad_item = st.number_input("Cantidad:", min_value=1, value=1)
         
     if st.button("➕ Añadir a la lista", use_container_width=True):
         cod_item = seleccion_combo.split(" - ")[0]
         nom_item = seleccion_combo.split(" - ")[1]
-        uni_item = df_maestro[df_maestro['Código'] == cod_item]['Unidad'].values[0]
+        
+        # Buscamos la unidad correspondiente de forma segura
+        fila_material = df_maestro[df_maestro['Código'].astype(str) == cod_item]
+        uni_item = fila_material['Unidad'].values[0] if not fila_material.empty else "Und"
         
         st.session_state.canasta.append({
             "Código": cod_item, "Material": nom_item, "Cantidad": cantidad_item, "Unidad": uni_item
