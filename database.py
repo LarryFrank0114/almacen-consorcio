@@ -106,7 +106,7 @@ def guardar_foto_drive(archivo, almacen, usuario):
         sh = conectar_sheets()
         if not sh: return None
         ws_fotos = sh.worksheet("fotos")
-        enlace_drive_carpeta = "https://drive.google.com/drive/folders/tu_id_de_carpeta_compartida"
+        enlace_drive_carpeta = "https://drive.google.com/drive/folders/12MLYN3FNhEnw3gjRAuphepLWWDccoBDc?usp=sharing"
         fecha_str = datetime.now().strftime("%Y-%m-%d %H:%M")
         ws_fotos.append_row([fecha_str, almacen, usuario, enlace_drive_carpeta])
         return enlace_drive_carpeta
