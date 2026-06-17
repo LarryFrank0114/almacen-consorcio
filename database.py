@@ -14,23 +14,23 @@ def conectar_sheets():
                 json_texto = json_texto.value
                 
             json_texto = json_texto.strip()
-            creds_dict = json.loads(json_texto)
+            
+            # 🔥 PARCHE CRÍTICO: Eliminamos caracteres de control inválidos o saltos de línea reales
+            # que hacen saltar el error "Invalid control character"
+            json_texto = json_texto.replace('\n', '\\n').replace('\r', '\\r')
+            
+            # Corrección por si se duplicaron los escapes al hacer el replace anterior
+            json_texto = json_texto.replace('\\\\n', '\\n').replace('\\\\r', '\\r')
+            
+            # Convertimos el texto limpio a diccionario de Python
+            creds_dict = json.loads(json_texto, strict=False) # strict=False tolera caracteres de control
         else:
             creds_dict = dict(st.secrets)
             
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
         
-        # 💡 Reemplaza este texto por el ID real de tu Google Sheets para asegurar la apertura directa:
-        # El ID lo encuentras en la URL de tu navegador: https://docs.google.com/spreadsheets/d/TU_ID_AQUI/edit
-        id_hoja_calculo = "1kQXECbqfkd_pYqxYPHQ2mv9ZsFyT3VoUONbzlmd7FOc" # <- Coloca tu ID real aquí
-        
-        try:
-            return client.open_by_key(id_hoja_calculo)
-        except:
-            # Si el ID de arriba no se ha cambiado o falla, intenta abrirlo por el nombre clásico anterior
-            return client.open("Herramientas")
-            
+        return client.open("01 - Herramientas") 
     except Exception as e:
         st.error(f"Error de conexión GCP: {e}")
         return None
