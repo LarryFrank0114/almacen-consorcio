@@ -1,7 +1,15 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import database as db
+
+# 🎯 IMPORTACIÓN CLAVE: Buscamos el archivo en la raíz. 
+# Si en tu GitHub se llama 'base de datos.py', descomenta la línea de abajo y borra la de database.
+try:
+    import database as db
+except ModuleNotFoundError:
+    # Por si acaso en tu sistema quedó nombrado como 'base de datos' con espacios:
+    import sys
+    db = __import__("base de datos")
 
 def render(sh):
     st.title("📦 Registro de Movimientos de Almacén")
@@ -20,7 +28,7 @@ def render(sh):
         st.warning("⚠️ El catálogo maestro está vacío. Por favor, agregue materiales primero.")
         return
 
-    # 🎯 CORRECCIÓN CLAVE: Usamos 'Código' y 'Material' con la tipografía exacta de tu Excel/Sheets
+    # Usamos 'Código' y 'Material' con la tipografía exacta de tu Excel/Sheets
     try:
         opciones_combo = df_maestro['Código'].astype(str) + " - " + df_maestro['Material'].astype(str)
     except KeyError:
@@ -115,5 +123,6 @@ def render(sh):
                     st.success(f"✨ {msg}")
                     st.session_state.canasta = [] # Vaciamos la lista tras el éxito
                     st.balloons()
+                    st.rerun()
                 else:
                     st.error(f"❌ {msg}")
