@@ -1,7 +1,6 @@
 import streamlit as st
 
 def aplicar_estilos_y_cabecera(idioma="es"):
-    # Diccionario de traducción rápido para la cabecera
     titulos = {
         "es": {
             "subtitulo": "Consorcio San Miguel · Sistema de Control de Almacén",
@@ -13,22 +12,18 @@ def aplicar_estilos_y_cabecera(idioma="es"):
         }
     }
     
-    # 🎯 1. Inyección de estilos CSS para botones, tablas y diseño general
     st.markdown("""
         <style>
-        /* Estilo para los botones de eliminar (rojo) */
         .stButton>button.btn-eliminar {
             background-color: #d9534f !important;
             color: white !important;
             border-radius: 5px;
         }
-        /* Estilo para los botones de modificar (amarillo/naranja) */
         .stButton>button.btn-modificar {
             background-color: #f0ad4e !important;
             color: white !important;
             border-radius: 5px;
         }
-        /* Ajuste de tarjetas informativas de stock */
         .tarjeta-stock {
             padding: 15px;
             background-color: #f8f9fa;
@@ -39,11 +34,8 @@ def aplicar_estilos_y_cabecera(idioma="es"):
         </style>
     """, unsafe_allow_html=True)
 
-    # 🎯 2. Diseño de Cabecera con LOGO Real e Imágenes del rubro
     col_logo, col_texto = st.columns([1, 4])
-    
     with col_logo:
-        # Puedes reemplazar esta URL por el enlace directo de tu logo real corporativo
         logo_url = "https://img.icons8.com/fluent/96/000000/construction.png" 
         st.image(logo_url, width=90)
         
@@ -52,7 +44,7 @@ def aplicar_estilos_y_cabecera(idioma="es"):
         st.caption(f"🏗️ {titulos[idioma]['lema']} | Perú - 中国 🇨🇳🇵🇪")
 
 def obtener_traducciones():
-    # Base de datos de traducciones para la interfaz CRUD y Reportes
+    """ 🎯 Esta es la función que te estaba pidiendo el sistema """
     return {
         "es": {
             "buscar": "Buscar material...",
@@ -78,6 +70,6 @@ def obtener_traducciones():
             "btn_eliminar": "🗑️ 删除",
             "confirmar_eliminar": "您确定要从主表中删除该资源吗？",
             "exito_eliminar": "资源成功删除。",
-            "error_permiso": "🚫 您没有执行此操作 la 权限。"
+            "error_permiso": "🚫 您没有执行此操作的权限。"
         }
     }
