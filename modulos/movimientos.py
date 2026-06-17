@@ -1,15 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-
-# 🎯 IMPORTACIÓN CLAVE: Buscamos el archivo en la raíz. 
-# Si en tu GitHub se llama 'base de datos.py', descomenta la línea de abajo y borra la de database.
-try:
-    import database as db
-except ModuleNotFoundError:
-    # Por si acaso en tu sistema quedó nombrado como 'base de datos' con espacios:
-    import sys
-    db = __import__("base de datos")
+import database as db  # 🎯 Importación directa del archivo raíz database.py
 
 def render(sh):
     st.title("📦 Registro de Movimientos de Almacén")
