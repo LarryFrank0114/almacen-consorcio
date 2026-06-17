@@ -1,6 +1,7 @@
 import streamlit as st
 
 def aplicar_estilos_y_cabecera(idioma="es"):
+    """ Aplica el diseño visual CSS y la cabecera del Consorcio San Miguel """
     titulos = {
         "es": {
             "subtitulo": "Consorcio San Miguel · Sistema de Control de Almacén",
@@ -44,7 +45,7 @@ def aplicar_estilos_y_cabecera(idioma="es"):
         st.caption(f"🏗️ {titulos[idioma]['lema']} | Perú - 中国 🇨🇳🇵🇪")
 
 def obtener_traducciones():
-    """ 🎯 Esta es la función que te estaba pidiendo el sistema """
+    """ Diccionario bilingüe para la interfaz del Dashboard """
     return {
         "es": {
             "buscar": "Buscar material...",
