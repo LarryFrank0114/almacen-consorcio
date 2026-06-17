@@ -1,119 +1,74 @@
 import streamlit as st
-import pandas as pd
 import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime
 
 def conectar_sheets():
-    """Establece conexión con la hoja de cálculo usando el JSON directo de los secretos."""
     try:
-        import json
-        # Leemos el JSON completo estructurado directamente desde los secretos
-        credenciales_dict = json.loads(st.secrets["google_sheets_json"])
-        gc = gspread.service_account_from_dict(credenciales_dict)
-        
-        # Abrir el libro por su nombre exacto
-        sh = gc.open("Inventario Consorcio San Miguel")
-        return sh
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+        client = gspread.authorize(creds)
+        # Reemplaza por el nombre exacto de tu archivo en la nube
+        return client.open("01 - Herramientas") 
     except Exception as e:
-        st.error(f"❌ Error de conexión con Google Sheets: {e}")
+        st.error(f"Error de conexión GCP: {e}")
         return None
 
-def inicializar_db():
-    """Extrae el inventario real desde Google Sheets y lo monta en la sesión actual."""
+def registrar_transaccion_avanzada(tipo, documento, almacen, fecha, solicitante, usuario, obs, canasta):
     sh = conectar_sheets()
-    if sh is not None:
-        try:
-            # Obtener datos de la pestaña 'inventario'
-            worksheet = sh.worksheet("inventario")
-            datos = worksheet.get_all_records()
-            
-            # Cargar a session_state como DataFrame nativo
-            if datos:
-                st.session_state.inventario = pd.DataFrame(datos)
-            else:
-                # Si la hoja está vacía, estructurarla con columnas por defecto
-                st.session_state.inventario = pd.DataFrame(columns=["Código", "Material", "Almacén", "Ubicación", "Stock", "Unidad", "Encargado"])
-        except Exception as e:
-            st.error(f"Error al leer la pestaña 'inventario': {e}")
-            st.session_state.inventario = pd.DataFrame(columns=["Código", "Material", "Almacén", "Ubicación", "Stock", "Unidad", "Encargado"])
-    else:
-        if 'inventario' not in st.session_state:
-            st.session_state.inventario = pd.DataFrame(columns=["Código", "Material", "Almacén", "Ubicación", "Stock", "Unidad", "Encargado"])
-
-    # Estructura del maestro auxiliar y de movimientos transaccionales en caché temporal
-    if 'maestro_materiales' not in st.session_state:
-        st.session_state.maestro_materiales = pd.DataFrame([
-            {"Código": "TUB-PE-110", "Material": "Tubería PEAD 110mm", "Unidad": "Metros"},
-            {"Código": "VAL-CO-04", "Material": "Válvula de Compuerta de 4 Pulgadas", "Unidad": "Unidades"},
-            {"Código": "ACC-TEE-110", "Material": "Accesorio Tee Inyectada 110mm", "Unidad": "Unidades"}
-        ])
-
-    if 'historial_movimientos' not in st.session_state:
-        st.session_state.historial_movimientos = pd.DataFrame(columns=[
-            "Fecha", "Tipo", "Documento", "Almacén", "Solicitante", "Supervisor", "Código", "Material", "Cantidad", "Unidad", "Encargado", "Observaciones"
-        ])
-
-def sincronizar_a_google_sheets(df):
-    """Sobrescribe la pestaña de Google Sheets para mantener la persistencia ante reinicios."""
-    sh = conectar_sheets()
-    if sh is not None:
-        try:
-            worksheet = sh.worksheet("inventario")
-            worksheet.clear()  # Limpiar datos antiguos
-            
-            # Preparar encabezados y filas
-            encabezados = df.columns.tolist()
-            valores = df.values.tolist()
-            
-            # Insertar todo en una sola transacción eficiente hacia la API de Google
-            worksheet.update([encabezados] + valores)
-            return True
-        except Exception as e:
-            st.error(f"❌ No se pudo sincronizar a Google Sheets: {e}")
-            return False
-    return False
-
-def registrar_transaccion(tipo_mov, doc, almacen, fecha, solicitante, supervisor, encargado, observaciones, lista_recursos):
-    """Procesa los movimientos modificando el stock en memoria y enviando los cambios de forma síncrona a Google Sheets."""
-    df_inv = st.session_state.inventario
-    df_hist = st.session_state.historial_movimientos
-    nuevos_movimientos = []
-
-    if tipo_mov == "Egreso (Vale de Salida)":
-        for rec in lista_recursos:
-            idx = df_inv[(df_inv['Código'] == rec['Código']) & (df_inv['Almacén'] == almacen)].index
-            stock_actual = df_inv.at[idx[0], 'Stock'] if len(idx) > 0 else 0
-            if stock_actual < rec['Cantidad']:
-                return False, f"❌ Stock insuficiente de {rec['Material']} en {almacen}. Disponible: {stock_actual}"
-
-    for rec in lista_recursos:
-        idx = df_inv[(df_inv['Código'] == rec['Código']) & (df_inv['Almacén'] == almacen)].index
+    if not sh: return False, "Sin conexión."
+    
+    try:
+        ws_historial = sh.worksheet("historial")
+        ws_inventario = sh.worksheet("inventario")
         
-        if len(idx) > 0:
-            stock_actual = int(df_inv.at[idx[0], 'Stock'])
-            if tipo_mov == "Egreso (Vale de Salida)":
-                df_inv.at[idx[0], 'Stock'] = stock_actual - rec['Cantidad']
-            else:
-                df_inv.at[idx[0], 'Stock'] = stock_actual + rec['Cantidad']
-        else:
-            nuevo_stock_item = {
-                "Código": rec['Código'], "Material": rec['Material'], "Almacén": almacen,
-                "Ubicación": "Por Asignar", "Stock": rec['Cantidad'], "Unidad": rec['Unidad'], "Encargado": encargado
-            }
-            df_inv = pd.concat([df_inv, pd.DataFrame([nuevo_stock_item])], ignore_index=True)
+        # Cargar inventario actual para modificar unidades en caliente
+        inv_data = ws_inventario.get_all_records()
+        
+        for item in canasta:
+            # 1. Registrar fila en el Historial General
+            ws_historial.append_row([
+                fecha, tipo, documento, almacen, item['Código'], item['Material'], item['Cantidad'], item['Unidad'], solicitante, usuario, obs
+            ])
+            
+            # 2. Modificar el stock en la pestaña "inventario"
+            fila_encontrada = None
+            stock_actual = 0
+            
+            for idx, row in enumerate(inv_data):
+                if str(row['Almacén']) == almacen and str(row['Código']) == str(item['Código']):
+                    fila_encontrada = idx + 2 # +2 por índice base 0 y encabezado
+                    stock_actual = int(row['Stock'])
+                    break
+            
+            # Calcular afectación numérica
+            if "Ingreso" in tipo or "Devolución" in tipo:
+                nuevo_stock = stock_actual + int(item['Cantidad'])
+            else: # Egreso
+                nuevo_stock = max(0, stock_actual - int(item['Cantidad']))
+                
+            if fila_encontrada:
+                # Actualizar columna E (Stock) que es la número 5
+                ws_inventario.update_cell(fila_encontrada, 5, nuevo_stock)
+                
+        return True, "Transacción completada. Inventarios recalculados en la nube."
+    except Exception as e:
+        return False, f"Error en procesamiento: {e}"
 
-        mov = {
-            "Fecha": str(fecha), "Tipo": tipo_mov, "Documento": doc, "Almacén": almacen,
-            "Solicitante": solicitante, "Supervisor": supervisor, "Código": rec['Código'],
-            "Material": rec['Material'], "Cantidad": rec['Cantidad'], "Unidad": rec['Unidad'],
-            "Encargado": encargado, "Observaciones": observaciones
-        }
-        nuevos_movimientos.append(mov)
-
-    # Actualizar estados internos
-    st.session_state.inventario = df_inv
-    st.session_state.historial_movimientos = pd.concat([df_hist, pd.DataFrame(nuevos_movimientos)], ignore_index=True)
-    
-    # 💾 IMPACTAR LA BASE DE DATOS EN LA NUBE INMEDIATAMENTE
-    sincronizar_a_google_sheets(df_inv)
-    
-    return True, f"✔️ Transacción {doc} procesada y guardada en Google Sheets con éxito."
+def guardar_foto_drive(archivo, almacen, usuario):
+    # Simula la subida al repositorio de imágenes o Drive y genera el enlace público de visualización.
+    # Para usar producción real de Drive se requiere habilitar la Drive API en tu consola GCP.
+    try:
+        sh = conectar_sheets()
+        ws_fotos = sh.worksheet("fotos")
+        
+        # Enlace simulado o real (puedes parametrizarlo con tu carpeta de Drive compartida)
+        enlace_estatico = f"https://drive.google.com/drive/folders/tu_id_de_carpeta_compartida"
+        fecha_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+        
+        # Registrar metadatos en Google Sheets para que no se pierdan nunca
+        ws_fotos.append_row([fecha_str, almacen, usuario, enlace_estatico])
+        return enlace_estatico
+    except Exception as e:
+        st.error(f"Error al escribir metadatos de imagen: {e}")
+        return None
