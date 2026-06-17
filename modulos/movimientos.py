@@ -72,9 +72,9 @@ def render(sh):
     st.markdown("---")
     st.markdown("#### 🛒 Agregar Insumos al Documento Abierto")
     
-    # 🛠️ ADAPTACIÓN DE COLUMNAS REALES (CODIGO y PRODUCTO)
+    # 🛠️ CORRECCIÓN DE COLUMNAS COINCIDENTES CON GOOGLE SHEETS ('Código' y 'Material')
     # Convertimos a string de manera segura para el combo selector
-    opciones_combo = df_maestro['CODIGO'].astype(str) + " - " + df_maestro['PRODUCTO'].astype(str)
+    opciones_combo = df_maestro['Código'].astype(str) + " - " + df_maestro['Material'].astype(str)
     
     col_mat1, col_mat2 = st.columns([3, 1])
     with col_mat1:
@@ -86,9 +86,9 @@ def render(sh):
         cod_item = seleccion_combo.split(" - ")[0]
         nom_item = seleccion_combo.split(" - ")[1]
         
-        # Obtener unidad de medida del maestro de forma segura usando tus columnas reales
-        fila_mat = df_maestro[df_maestro['CODIGO'].astype(str) == cod_item]
-        uni_item = fila_mat['UNIDAD'].values[0] if not fila_mat.empty else "Und"
+        # Obtener unidad de medida del maestro de forma segura usando tus columnas con inicial mayúscula
+        fila_mat = df_maestro[df_maestro['Código'].astype(str) == cod_item]
+        uni_item = fila_mat['Unidad'].values[0] if not fila_mat.empty else "Und"
         
         st.session_state.canasta.append({
             "Código": cod_item, "Material": nom_item, "Cantidad": cantidad_item, "Unidad": uni_item
