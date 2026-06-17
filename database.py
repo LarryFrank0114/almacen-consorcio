@@ -4,81 +4,113 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 
 def conectar_sheets():
+    """
+    Establece la conexión segura con Google Sheets y Google Drive.
+    Busca de forma flexible la estructura correcta de credenciales en st.secrets
+    para evitar errores de formato (client_email, token_uri).
+    """
     try:
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         
-        # 🛠️ Corrección de compatibilidad: Intenta usar la clave antigua o la estructura directa de tus secrets anteriores
+        # 🛡️ Búsqueda inteligente de la subllave del Service Account
         if "gcp_service_account" in st.secrets:
-            creds_dict = st.secrets["gcp_service_account"]
+            creds_dict = dict(st.secrets["gcp_service_account"])
         elif "gspread_credentials" in st.secrets:
-            creds_dict = st.secrets["gspread_credentials"]
+            creds_dict = dict(st.secrets["gspread_credentials"])
+        elif "connections" in st.secrets and "gcs" in st.secrets["connections"]:
+            creds_dict = dict(st.secrets["connections"]["gcs"])
         else:
-            # Si tus secretos están guardados de forma directa en la raíz del TOML de Streamlit
+            # Si guardaste el JSON directamente en la raíz de Secrets
             creds_dict = dict(st.secrets)
             
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
         
-        # Asegúrate de que este nombre corresponda exactamente al de tu archivo en Google Drive
+        # Abre el libro principal de control logístico
         return client.open("01 - Herramientas") 
     except Exception as e:
         st.error(f"Error de conexión GCP: {e}")
         return None
+
 def registrar_transaccion_avanzada(tipo, documento, almacen, fecha, solicitante, usuario, obs, canasta):
+    """
+    Procesa la canasta de materiales afectando dinámicamente las existencias
+    en la pestaña 'inventario' y dejando rastro en la pestaña 'historial'.
+    """
     sh = conectar_sheets()
-    if not sh: return False, "Sin conexión."
+    if not sh: 
+        return False, "Sin conexión con la base de datos central."
     
     try:
         ws_historial = sh.worksheet("historial")
         ws_inventario = sh.worksheet("inventario")
         
-        # Cargar inventario actual para modificar unidades en caliente
+        # Descargar el inventario actual para ubicar filas y stocks en tiempo real
         inv_data = ws_inventario.get_all_records()
         
         for item in canasta:
-            # 1. Registrar fila en el Historial General
+            # 1. Registrar el movimiento en la sábana histórica
             ws_historial.append_row([
-                fecha, tipo, documento, almacen, item['Código'], item['Material'], item['Cantidad'], item['Unidad'], solicitante, usuario, obs
+                fecha, 
+                tipo, 
+                documento, 
+                almacen, 
+                item['Código'], 
+                item['Material'], 
+                item['Cantidad'], 
+                item['Unidad'], 
+                solicitante, 
+                usuario, 
+                obs
             ])
             
-            # 2. Modificar el stock en la pestaña "inventario"
+            # 2. Buscar la combinación de Almacén + Código de Material en la hoja de inventario
             fila_encontrada = None
             stock_actual = 0
             
             for idx, row in enumerate(inv_data):
-                if str(row['Almacén']) == almacen and str(row['Código']) == str(item['Código']):
-                    fila_encontrada = idx + 2 # +2 por índice base 0 y encabezado
-                    stock_actual = int(row['Stock'])
+                if str(row['Almacén']).strip() == str(almacen).strip() and str(row['Código']).strip() == str(item['Código']).strip():
+                    fila_encontrada = idx + 2  # +2 por índice base 0 y fila de encabezados en Sheets
+                    stock_actual = int(row['Stock']) if row['Stock'] != "" else 0
                     break
             
-            # Calcular afectación numérica
+            # 3. Aplicar las matemáticas según tu flujo operacional solicitado
+            # Ingresos y Devoluciones suman stock; Egresos restan stock
             if "Ingreso" in tipo or "Devolución" in tipo:
                 nuevo_stock = stock_actual + int(item['Cantidad'])
-            else: # Egreso
+            else:  # Egreso (Vale de Salida)
                 nuevo_stock = max(0, stock_actual - int(item['Cantidad']))
                 
+            # 4. Impactar la celda correspondiente en la nube (Columna E = Número 5)
             if fila_encontrada:
-                # Actualizar columna E (Stock) que es la número 5
                 ws_inventario.update_cell(fila_encontrada, 5, nuevo_stock)
+            else:
+                # Si la combinación Almacén - Material no existía previamente, se crea la fila inicial
+                ws_inventario.append_row([almacen, item['Código'], item['Material'], "Ubicación General", nuevo_stock])
                 
-        return True, "Transacción completada. Inventarios recalculados en la nube."
+        return True, "Transacción completada con éxito. Inventarios actualizados en la nube."
     except Exception as e:
-        return False, f"Error en procesamiento: {e}"
+        return False, f"Error crítico al procesar la transacción: {e}"
 
 def guardar_foto_drive(archivo, almacen, usuario):
-    # Simula la subida al repositorio de imágenes o Drive y genera el enlace público de visualización.
-    # Para usar producción real de Drive se requiere habilitar la Drive API en tu consola GCP.
+    """
+    Registra metadatos de las imágenes de inspección por almacén.
+    Almacena el enlace de acceso directo en la pestaña 'fotos'.
+    """
     try:
         sh = conectar_sheets()
+        if not sh:
+            return None
+            
         ws_fotos = sh.worksheet("fotos")
         
-        # Enlace simulado o real (puedes parametrizarlo con tu carpeta de Drive compartida)
-        enlace_estatico = f"https://drive.google.com/drive/folders/tu_id_de_carpeta_compartida"
+        # Reemplaza este enlace por el ID de tu carpeta real compartida en Google Drive
+        enlace_drive_carpeta = "https://drive.google.com/drive/folders/tu_id_de_carpeta_compartida"
         fecha_str = datetime.now().strftime("%Y-%m-%d %H:%M")
         
-        # Registrar metadatos en Google Sheets para que no se pierdan nunca
-        ws_fotos.append_row([fecha_str, almacen, usuario, enlace_estatico])
-        return enlace_estatico
+        # Insertar registro persistente en Google Sheets para auditoría visual
+        ws_fotos.append_row([fecha_str, almacen, usuario, enlace_drive_carpeta])
+        return enlace_drive_carpeta
     except Exception as e:
-        st.error(f"Error al escribir metadatos de imagen: {e}")
+        st.error(f"Error al escribir metadatos de la imagen en la nube: {e}")
         return None
