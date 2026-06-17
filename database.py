@@ -1,12 +1,8 @@
-import streamlit as st
-import gspread
-from google.oauth2.service_account import Credentials
-from datetime import datetime
-
 def conectar_sheets():
     try:
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         
+        # Leemos el bloque limpio de secretos que ya configuraste bien
         if "gcp_service_account" in st.secrets:
             creds_dict = dict(st.secrets["gcp_service_account"])
         else:
@@ -15,11 +11,12 @@ def conectar_sheets():
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
         
-        return client.open("01 - Herramientas") 
+        # 💡 Abrimos por el nombre exacto de tu archivo en Drive
+        return client.open("Herramientas") 
+        
     except Exception as e:
         st.error(f"Error de conexión GCP: {e}")
         return None
-
 def registrar_transaccion_avanzada(tipo, documento, almacen, fecha, solicitante, usuario, obs, canasta):
     sh = conectar_sheets()
     if not sh: 
