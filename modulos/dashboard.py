@@ -2,85 +2,12 @@ import streamlit as st
 import pandas as pd
 import database as db
 
-# ==========================================
-# 🎨 FUNCIONES DE ESTILOS Y TRADUCCIONES INTEGRADAS
-# ==========================================
-def aplicar_estilos_y_cabecera_local(idioma="es"):
-    titulos = {
-        "es": {
-            "subtitulo": "Consorcio San Miguel · Sistema de Control de Almacén",
-            "lema": "Herramientas y Construcción"
-        },
-        "zh": {
-            "subtitulo": "圣米格尔财团 · 仓库控制系统",
-            "lema": "工具与建筑"
-        }
-    }
-    
-    st.markdown("""
-        <style>
-        .stButton>button.btn-eliminar {
-            background-color: #d9534f !important;
-            color: white !important;
-            border-radius: 5px;
-        }
-        .stButton>button.btn-modificar {
-            background-color: #f0ad4e !important;
-            color: white !important;
-            border-radius: 5px;
-        }
-        .tarjeta-stock {
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-left: 5px solid #007bff;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+# 🎯 IMPORTACIÓN COMPATIBLE DE ESTILOS (Soporta rutas absolutas y relativas del servidor)
+try:
+    from modulos import estilos
+except ModuleNotFoundError:
+    import estilos
 
-    col_logo, col_texto = st.columns([1, 4])
-    with col_logo:
-        logo_url = "https://img.icons8.com/fluent/96/000000/construction.png" 
-        st.image(logo_url, width=90)
-        
-    with col_texto:
-        st.subheader(titulos[idioma]["subtitulo"])
-        st.caption(f"🏗️ {titulos[idioma]['lema']} | Perú - 中国 🇨🇳🇵🇪")
-
-def obtener_traducciones_locales():
-    return {
-        "es": {
-            "buscar": "Buscar material...",
-            "tabla_codigo": "Código",
-            "tabla_material": "Material",
-            "tabla_unidad": "Unidad",
-            "tabla_stock": "Stock Disponible",
-            "tabla_acciones": "Acciones",
-            "btn_modificar": "✏️ Editar",
-            "btn_eliminar": "🗑️ Eliminar",
-            "confirmar_eliminar": "¿Está seguro de eliminar este recurso del maestro?",
-            "exito_eliminar": "Recurso eliminado correctamente.",
-            "error_permiso": "🚫 No tienes permisos para realizar esta acción."
-        },
-        "zh": {
-            "buscar": "搜索物料...",
-            "tabla_codigo": "编码",
-            "tabla_material": "材料名称",
-            "tabla_unidad": "单位",
-            "tabla_stock": "可用库存",
-            "tabla_acciones": "操作",
-            "btn_modificar": "✏️ 编辑",
-            "btn_eliminar": "🗑️ 删除",
-            "confirmar_eliminar": "您确定要从主表中删除该资源吗？",
-            "exito_eliminar": "资源成功删除。",
-            "error_permiso": "🚫 您没有执行此操作的权限。"
-        }
-    }
-
-# ==========================================
-# 🚀 FUNCIÓN PRINCIPAL DE RENDERIZADO
-# ==========================================
 def render(sh):
     # 🌎 1. Selector Global de Idioma en la barra lateral
     if "idioma" not in st.session_state:
@@ -89,11 +16,11 @@ def render(sh):
     idioma_sel = st.sidebar.selectbox("🌐 Language / 語言", ["Español", "繁體中文 (Chino Tradicional)"])
     st.session_state.idioma = "es" if "Español" in idioma_sel else "zh"
     
-    # Obtener el diccionario bilingüe local
-    lang = obtener_traducciones_locales()[st.session_state.idioma]
+    # Consumir el diccionario del archivo estilos.py externo
+    lang = estilos.obtener_traducciones()[st.session_state.idioma]
     
-    # 🎨 2. Aplicar estilos visuales y cabecera corporativa local
-    aplicar_estilos_y_cabecera_local(st.session_state.idioma)
+    # 🎨 2. Aplicar estilos visuales y cabecera corporativa externa
+    estilos.aplicar_estilos_y_cabecera(st.session_state.idioma)
     
     st.markdown("---")
     
@@ -121,7 +48,7 @@ def render(sh):
     else:
         df_filtrado = df_maestro
 
-    # Banner informativo
+    # Banner informativo estético
     st.markdown("""
         <div style='background-color:#ffeeba; padding:10px; border-radius:5px; border-left:6px solid #ffc107; margin-bottom:15px; color: #856404;'>
             ⚙️ <strong>Aviso / 💡 提示:</strong> Los cambios en esta sección alteran directamente la base de datos maestra del proyecto.
