@@ -2,27 +2,19 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
+import json  # 👈 Importante: Necesario para procesar tu string JSON
 
 def conectar_sheets():
     try:
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         
-        creds_dict = None
-        
-        # 🔎 Buscamos dentro de cada sección de tus secretos cuál contiene la firma de Google
-        for key in st.secrets.keys():
-            # Si es un diccionario y contiene los campos que te pide el error en la imagen
-            if isinstance(st.secrets[key], dict) and "client_email" in st.secrets[key]:
-                creds_dict = dict(st.secrets[key])
-                break
-                
-        # Si no lo encontró en una subllave, intentamos validar si los pusiste en la raíz
-        if creds_dict is None and "client_email" in st.secrets:
+        # 🧩 Detectamos si guardaste las credenciales como un string de texto
+        if "google_sheets_json" in st.secrets:
+            # Convertimos el string plano de vuelta a un diccionario de Python
+            creds_dict = json.loads(st.secrets["google_sheets_json"])
+        else:
+            # En caso de que falle o cambie, intentamos buscar de la forma clásica
             creds_dict = dict(st.secrets)
-            
-        if creds_dict is None:
-            st.error("❌ No se encontró ninguna estructura de Service Account válida en los Secrets de Streamlit.")
-            return None
             
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
@@ -31,7 +23,6 @@ def conectar_sheets():
     except Exception as e:
         st.error(f"Error de conexión GCP: {e}")
         return None
-
 def registrar_transaccion_avanzada(tipo, documento, almacen, fecha, solicitante, usuario, obs, canasta):
     """
     Procesa la canasta de materiales afectando dinámicamente las existencias
