@@ -1,8 +1,14 @@
+import streamlit as st
+import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime
+
 def conectar_sheets():
     try:
+        # Configuración de los permisos de lectura y escritura en Google Drive y Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         
-        # Leemos el bloque limpio de secretos que ya configuraste bien
+        # Lee las credenciales del bloque estructurado [gcp_service_account] en tus Secrets
         if "gcp_service_account" in st.secrets:
             creds_dict = dict(st.secrets["gcp_service_account"])
         else:
@@ -11,12 +17,13 @@ def conectar_sheets():
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
         
-        # 💡 Abrimos por el nombre exacto de tu archivo en Drive
-        return client.open("Herramientas") 
+        # 💡 Nombre exacto del archivo en tu Drive (sin espacios en el guion)
+        return client.open("01-Herramientas") 
         
     except Exception as e:
         st.error(f"Error de conexión GCP: {e}")
         return None
+
 def registrar_transaccion_avanzada(tipo, documento, almacen, fecha, solicitante, usuario, obs, canasta):
     sh = conectar_sheets()
     if not sh: 
@@ -28,6 +35,7 @@ def registrar_transaccion_avanzada(tipo, documento, almacen, fecha, solicitante,
         inv_data = ws_inventario.get_all_records()
         
         for item in canasta:
+            # Registrar cada producto en la pestaña de historial
             ws_historial.append_row([
                 fecha, tipo, documento, almacen, item['Código'], 
                 item['Material'], item['Cantidad'], item['Unidad'], 
@@ -37,17 +45,20 @@ def registrar_transaccion_avanzada(tipo, documento, almacen, fecha, solicitante,
             fila_encontrada = None
             stock_actual = 0
             
+            # Buscar si el material ya existe en ese almacén específico
             for idx, row in enumerate(inv_data):
                 if str(row['Almacén']).strip() == str(almacen).strip() and str(row['Código']).strip() == str(item['Código']).strip():
                     fila_encontrada = idx + 2
                     stock_actual = int(row['Stock']) if row['Stock'] != "" else 0
                     break
             
+            # Calcular el nuevo inventario según la operación
             if "Ingreso" in tipo or "Devolución" in tipo:
                 nuevo_stock = stock_actual + int(item['Cantidad'])
             else:
                 nuevo_stock = max(0, stock_actual - int(item['Cantidad']))
                 
+            # Actualizar fila existente o crear una nueva si es un material nuevo en el almacén
             if fila_encontrada:
                 ws_inventario.update_cell(fila_encontrada, 5, nuevo_stock)
             else:
