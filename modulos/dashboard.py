@@ -1,26 +1,28 @@
 import streamlit as st
 import pandas as pd
 import database as db
-from modulos.estilos import aplicar_estilos_y_cabecera, obtener_traducciones
+
+# 🎯 IMPORTACIÓN COMPATIBLE: Fuerza la lectura del archivo de estilos
+import modulos.estilos as estilos
 
 def render(sh):
-    # 🌎 1. Selector Global de Idioma en la barra lateral (Sidebar)
+    # 🌎 1. Selector Global de Idioma en la barra lateral
     if "idioma" not in st.session_state:
         st.session_state.idioma = "es"
         
     idioma_sel = st.sidebar.selectbox("🌐 Language / 語言", ["Español", "繁體中文 (Chino Tradicional)"])
     st.session_state.idioma = "es" if "Español" in idioma_sel else "zh"
     
-    lang = obtener_traducciones()[st.session_state.idioma]
+    # Llamamos a las funciones usando el prefijo 'estilos.' para asegurar que las lea
+    lang = estilos.obtener_traducciones()[st.session_state.idioma]
     
     # 🎨 2. Aplicar estilos visuales y cabecera corporativa del Consorcio San Miguel
-    aplicar_estilos_y_cabecera(st.session_state.idioma)
+    estilos.aplicar_estilos_y_cabecera(st.session_state.idioma)
     
     st.markdown("---")
     
     # 🔐 3. Control de Permisos por Usuario
     usuario_actual = st.session_state.get("username", "Invitado")
-    # Larry Frank y el Administrador tienen permisos CRUD para borrar/modificar
     tiene_permiso_crud = usuario_actual in ["Larry Frank", "Supervisor Almacen", "Admin"]
 
     # 📊 4. Carga segura del catálogo maestro desde la nube
@@ -43,14 +45,14 @@ def render(sh):
     else:
         df_filtrado = df_maestro
 
-    # Banner informativo de advertencia técnica
+    # Banner informativo
     st.markdown("""
         <div style='background-color:#ffeeba; padding:10px; border-radius:5px; border-left:6px solid #ffc107; margin-bottom:15px; color: #856404;'>
             ⚙️ <strong>Aviso / 💡 提示:</strong> Los cambios en esta sección alteran directamente la base de datos maestra del proyecto.
         </div>
     """, unsafe_allow_html=True)
 
-    # 🎯 5. Grilla interactiva CRUD (Código, Material, Unidad, Acciones)
+    # 🎯 5. Grilla interactiva CRUD
     col_h1, col_h2, col_h3, col_h4 = st.columns([1.5, 3, 1.5, 2.5])
     col_h1.markdown(f"**{lang['tabla_codigo']}**")
     col_h2.markdown(f"**{lang['tabla_material']}**")
@@ -82,7 +84,7 @@ def render(sh):
                 else:
                     st.session_state[f"modal_del_{fila['Código']}"] = True
 
-        # Formulario flotante para EDITAR recurso
+        # Formulario expandible para EDITAR recurso
         if st.session_state.get(f"modal_edit_{fila['Código']}", False):
             with st.expander(f"📝 Modificar Recurso: {fila['Código']}", expanded=True):
                 nuevo_nom = st.text_input("Nuevo Nombre del Material:", value=fila['Material'], key=f"txt_n_{fila['Código']}")
@@ -93,7 +95,6 @@ def render(sh):
                     exito, msg = db.modificar_material_maestro(fila['Código'], nuevo_nom, nueva_uni)
                     if exito:
                         st.success(msg)
-                        st.session_state.maestro_materiales = None  # Resetea caché
                         del st.session_state[f"modal_edit_{fila['Código']}"]
                         st.rerun()
                 if c_mod2.button("❌ Cancelar", key=f"canc_e_{fila['Código']}"):
@@ -108,7 +109,6 @@ def render(sh):
                     exito, msg = db.eliminar_material_maestro(fila['Código'])
                     if exito:
                         st.success(lang['exito_eliminar'])
-                        st.session_state.maestro_materiales = None  # Resetea caché
                         del st.session_state[f"modal_del_{fila['Código']}"]
                         st.rerun()
                     else:
