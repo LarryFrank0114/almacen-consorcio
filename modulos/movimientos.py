@@ -4,119 +4,116 @@ from datetime import datetime
 import database as db
 
 def render(sh):
-    st.markdown("### Formulario de Registro de Movimientos Transaccionales")
+    st.title("📦 Registro de Movimientos de Almacén")
     st.markdown("---")
     
-    # 🔓 CONTROL DE ACCESO: Todos los usuarios autenticados pueden registrar movimientos
-    if not st.session_state.get("logged_in", False):
-        st.error("🚫 Inicie sesión para acceder a este módulo.")
+    # 1. Cargar el catálogo maestro para los combos de selección
+    try:
+        ws_maestro = sh.worksheet("maestro")
+        data_maestro = ws_maestro.get_all_records()
+        df_maestro = pd.DataFrame(data_maestro)
+    except Exception as e:
+        st.error(f"Error al cargar el catálogo maestro: {e}")
         return
-
-    # Forzar carga segura del maestro de materiales si no está en caché
-    if "maestro_materiales" not in st.session_state or st.session_state.maestro_materiales is None:
-        try:
-            ws_maestro = sh.worksheet("maestro")
-            st.session_state.maestro_materiales = pd.DataFrame(ws_maestro.get_all_records())
-        except Exception as e:
-            st.error(f"⚠️ No se pudo leer el catálogo maestro de materiales: {e}")
-            return
-
-    df_maestro = st.session_state.maestro_materiales
 
     if df_maestro.empty:
-        st.warning("⚠️ El catálogo maestro de materiales está vacío. Por favor, registre materiales en Ajustes primero.")
+        st.warning("⚠️ El catálogo maestro está vacío. Por favor, agregue materiales primero.")
         return
 
-    # 🔐 FILTRADO RESTRINGIDO DE OPERACIÓN SEGÚN LA IDENTIDAD DEL USUARIO
-    user = st.session_state.username
-    
-    if "Piero Pezo" in user:
-        options_almacen = ["Almacén 10"]
-    elif "Marcial Huayta" in user:
-        options_almacen = ["Almacén 8"]
-    elif "Enrique Sanchez" in user:
-        options_almacen = ["Almacén 6"]
-    elif "Gregorio Rodriguez" in user:
-        options_almacen = ["Almacén 1"]
-    else:
-        # Larry y Supervisión tienen el control total de todas las sedes
-        options_almacen = ["Almacén 1", "Almacén 6", "Almacén 8", "Almacén 10"]
+    # 🎯 CORRECCIÓN CLAVE: Usamos 'Código' y 'Material' con la tipografía exacta de tu Excel/Sheets
+    try:
+        opciones_combo = df_maestro['Código'].astype(str) + " - " + df_maestro['Material'].astype(str)
+    except KeyError:
+        st.error("❌ Error de columnas: Verifica que tu hoja 'maestro' tenga las cabeceras exactas: 'Código' y 'Material'")
+        return
 
-    # ==========================================
-    # FORMULARIO DE CABECERA LOGÍSTICA
-    # ==========================================
-    with st.form("form_cabecera_movs"):
-        col1, col2 = st.columns(2)
-        with col1:
-            # Tipos de operaciones oficiales estandarizadas
-            tipo_mov = st.selectbox("Tipo de Operación Logística:", [
-                "Ingreso (Guía de Remisión)", 
-                "Ingreso (Vale de Ingreso - Devolución)",
-                "Egreso (Vale de Salida)"
-            ])
-            almacen_sel = st.selectbox("Almacén de Operación:", options=options_almacen)
-        with col2:
-            num_doc = st.text_input("Número de Documento Oficial (Guía / Vale):")
-            fecha_sel = st.date_input("Fecha de Ejecución:", value=datetime.now().date())
-            
-        solicitante = st.text_input("Solicitante / Contratista / Cuadrilla Receptor:")
-        observaciones = st.text_area("Notas Técnicas / Destino del Material:")
-        
-        # Botón obligatorio del formulario de cabecera
-        st.form_submit_button("Fijar Datos de Cabecera")
-
-    # Inicializar canasta si no existe
+    # 2. Inicializar la canasta temporal en la sesión si no existe
     if "canasta" not in st.session_state:
         st.session_state.canasta = []
 
+    # 3. Formulario de Datos Generales del Movimiento
+    st.subheader("📋 Datos Generales")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        tipo_movimiento = st.selectbox("Tipo de Movimiento", ["Ingreso", "Egreso", "Devolución"])
+        almacen = st.selectbox("Almacén de Destino/Origen", ["Almacén Central", "Almacén Norte", "Almacén Sur"])
+    with col2:
+        documento = st.text_input("Nº Documento / Guía", placeholder="EG-001 o FAC-123")
+        solicitante = st.text_input("Solicitante / Receptor", placeholder="Nombre del operario")
+    with col3:
+        fecha_mov = st.date_input("Fecha de Registro", datetime.now())
+        observaciones = st.text_area("Observaciones Adicionales", placeholder="Detalles del movimiento...")
+
     st.markdown("---")
-    st.markdown("#### 🛒 Agregar Insumos al Documento Abierto")
-    
-    # 🛠️ CORRECCIÓN DE COLUMNAS COINCIDENTES CON GOOGLE SHEETS ('Código' y 'Material')
-    # Convertimos a string de manera segura para el combo selector
-    opciones_combo = df_maestro['Código'].astype(str) + " - " + df_maestro['Material'].astype(str)
-    
-    col_mat1, col_mat2 = st.columns([3, 1])
-    with col_mat1:
-        seleccion_combo = st.selectbox("Seleccione el Material Técnico:", options=opciones_combo)
-    with col_mat2:
-        cantidad_item = st.number_input("Cantidad de Artículos:", min_value=1, value=1)
 
-    if st.button("➕ Añadir Material a la Lista", use_container_width=True):
-        cod_item = seleccion_combo.split(" - ")[0]
-        nom_item = seleccion_combo.split(" - ")[1]
-        
-        # Obtener unidad de medida del maestro de forma segura usando tus columnas con inicial mayúscula
-        fila_mat = df_maestro[df_maestro['Código'].astype(str) == cod_item]
-        uni_item = fila_mat['Unidad'].values[0] if not fila_mat.empty else "Und"
-        
-        st.session_state.canasta.append({
-            "Código": cod_item, "Material": nom_item, "Cantidad": cantidad_item, "Unidad": uni_item
-        })
-        st.toast(f"📦 Añadido: {nom_item} ({cantidad_item} {uni_item})")
+    # 4. Selector de Materiales e Insumos (La Canasta)
+    st.subheader("🛒 Agregar Insumos al Documento Abierto")
+    col_mat, col_cant, col_btn = st.columns([5, 2, 2])
 
-    # Renderizado y procesamiento de la canasta abierta
+    with col_mat:
+        seleccion_material = st.selectbox("Seleccione el Material", opciones_combo)
+    with col_cant:
+        cantidad_item = st.number_input("Cantidad", min_value=1, value=1, step=1)
+    with col_btn:
+        st.write("<br>", unsafe_allow_html=True) # Espaciador estético
+        if st.button("➕ Añadir a Lista"):
+            # Extraer el código separado por el guion
+            codigo_sel = seleccion_material.split(" - ")[0]
+            fila_material = df_maestro[df_maestro['Código'].astype(str) == codigo_sel].iloc[0]
+            
+            # Insertar a la lista temporal
+            st.session_state.canasta.append({
+                "Código": codigo_sel,
+                "Material": fila_material['Material'],
+                "Cantidad": int(cantidad_item),
+                "Unidad": fila_material['Unidad']
+            })
+            st.toast("Material añadido a la lista", icon="✅")
+
+    # 5. Mostrar la lista agregada y control de Fotos
     if st.session_state.canasta:
-        st.markdown("<br>📦 **Items Cargados en el Documento Actual**", unsafe_allow_html=True)
+        st.markdown("### 📋 Ítems listos para procesar")
         df_canasta = pd.DataFrame(st.session_state.canasta)
-        st.dataframe(df_canasta, use_container_width=True, hide_index=True)
-        
-        col_btn1, col_btn2 = st.columns(2)
-        with col_btn1:
-            if st.button("🧼 Vaciar Lista Completa", use_container_width=True):
-                st.session_state.canasta = []
-                st.rerun()
-        with col_btn2:
-            if st.button("🚀 PROCESAR Y TRANSACCIONAR EN LA NUBE", type="primary", use_container_width=True):
-                if not num_doc or not solicitante:
-                    st.error("❌ Error: Los campos 'Número de Documento' y 'Solicitante' son obligatorios para procesar el flujo.")
+        st.dataframe(df_canasta, use_container_width=True)
+
+        if st.button("🗑️ Limpiar Lista"):
+            st.session_state.canasta = []
+            st.rerun()
+
+        st.markdown("---")
+        st.subheader("📸 Evidencia Fotográfica (Opcional)")
+        foto_archivo = st.file_uploader("Subir foto de la guía o materiales", type=["jpg", "jpeg", "png"])
+
+        if foto_archivo is not None:
+            st.image(foto_archivo, caption="Evidencia cargada en memoria", width=300)
+
+        # 6. Botón Final de Procesar y Guardar todo en Google Sheets
+        st.write("<br>", unsafe_allow_html=True)
+        if st.button("🚀 Confirmar y Registrar Movimiento Completo"):
+            usuario_activo = st.session_state.get("username", "Usuario Sistema")
+            fecha_str = fecha_mov.strftime("%Y-%m-%d")
+
+            with st.spinner("Procesando transacciones e inventario central..."):
+                # Primero guardamos la foto si el usuario subió una
+                if foto_archivo is not None:
+                    db.guardar_foto_drive(foto_archivo, almacen, usuario_activo)
+
+                # Registramos el lote completo en el historial e inventario
+                exito, msg = db.registrar_transaccion_avanzada(
+                    tipo=tipo_movimiento,
+                    documento=documento,
+                    almacen=almacen,
+                    fecha=fecha_str,
+                    solicitante=solicitante,
+                    usuario=usuario_activo,
+                    obs=observaciones,
+                    canasta=st.session_state.canasta
+                )
+
+                if exito:
+                    st.success(f"✨ {msg}")
+                    st.session_state.canasta = [] # Vaciamos la lista tras el éxito
+                    st.balloons()
                 else:
-                    # Enviar transacciones a database.py para afectar inventarios y escribir historial
-                    exito, msg = db.registrar_transaccion_avanzada(
-                        tipo_mov, num_doc, almacen_sel, str(fecha_sel), solicitante, user, observaciones, st.session_state.canasta
-                    )
-                    if exito:
-                        st.success(f"✔️ {msg}")
-                        st.session_state.canasta = []
-                    else:
-                        st.error(f"❌ {msg}")
+                    st.error(f"❌ {msg}")
