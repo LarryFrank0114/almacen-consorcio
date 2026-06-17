@@ -104,12 +104,11 @@ def eliminar_material_maestro(codigo_material):
         return False, f"Error al intentar eliminar: {e}"
 
 def guardar_foto_drive(archivo, almacen, usuario):
-    """ 📸 Sube físicamente la imagen a tu carpeta de Google Drive y registra su link individual """
+    """ 📸 Sube físicamente la imagen a tu carpeta de Google Drive saltando la restricción de cuota de la cuenta de servicio """
     try:
         if archivo is None:
             return None
             
-        # 🎯 SCOPES EXTENDIDOS: Permiso explícito de escritura y lectura de archivos en Drive
         scopes_drive = ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/drive.file"]
         
         if "gcp_service_account" in st.secrets:
@@ -123,7 +122,6 @@ def guardar_foto_drive(archivo, almacen, usuario):
         # ID verificado de tu carpeta de destino en Google Drive
         id_carpeta_destino = "12MLYN3FNhEnw3gjRAuphepLWWDccoBDc"
         
-        # Estructurar nombre del archivo con marca de tiempo única
         fecha_str = datetime.now().strftime("%Y%m%d_%H%M%S")
         nombre_archivo_drive = f"AUDITORIA_{almacen}_{fecha_str}.jpg"
         
@@ -132,28 +130,32 @@ def guardar_foto_drive(archivo, almacen, usuario):
             'parents': [id_carpeta_destino]
         }
         
-        # 🎯 REINICIAR PUNTERO: Forzar lectura completa del búfer de bytes del cargador
         archivo.seek(0)
         archivo_bytes = io.BytesIO(archivo.read())
         media = MediaIoBaseUpload(archivo_bytes, mimetype=archivo.type, resumable=True)
         
-        # Crear archivo físico dentro de la carpeta en Drive
+        # 🎯 CORRECCIÓN ACÁ: Añadimos supportsAllDrives=True para obligar al sistema a heredar la cuota del dueño de la carpeta
         archivo_subido = service.files().create(
             body=file_metadata, 
             media_body=media, 
-            fields='id, webViewLink'
+            fields='id, webViewLink',
+            supportsAllDrives=True
         ).execute()
         
         enlace_foto_individual = archivo_subido.get('webViewLink')
         
-        # Otorgar permisos de lectura global al enlace generado automáticamente
+        # Otorgar permisos públicos de lectura
         try:
             permission = {'type': 'anyone', 'role': 'reader'}
-            service.permissions().create(fileId=archivo_subido.get('id'), body=permission).execute()
+            service.permissions().create(
+                fileId=archivo_subido.get('id'), 
+                body=permission,
+                supportsAllDrives=True
+            ).execute()
         except Exception:
             pass 
             
-        # Almacenar traza en la pestaña 'fotos' de Google Sheets
+        # Registrar traza en la hoja 'fotos'
         sh = conectar_sheets()
         if sh:
             ws_fotos = sh.worksheet("fotos")
