@@ -7,7 +7,7 @@ def render(sh):
     st.markdown("### Formulario de Registro de Movimientos Transaccionales")
     st.markdown("---")
     
-    # 🔓 CONTROL DE ACCESO CORREGIDO: Todos los usuarios autenticados pueden registrar movimientos
+    # 🔓 CONTROL DE ACCESO: Todos los usuarios autenticados pueden registrar movimientos
     if not st.session_state.get("logged_in", False):
         st.error("🚫 Inicie sesión para acceder a este módulo.")
         return
@@ -72,8 +72,9 @@ def render(sh):
     st.markdown("---")
     st.markdown("#### 🛒 Agregar Insumos al Documento Abierto")
     
-    # Armamos la lista desplegable uniendo Código y Descripción de forma segura como strings
-    opciones_combo = df_maestro['Código'].astype(str) + " - " + df_maestro['Material'].astype(str)
+    # 🛠️ ADAPTACIÓN DE COLUMNAS REALES (CODIGO y PRODUCTO)
+    # Convertimos a string de manera segura para el combo selector
+    opciones_combo = df_maestro['CODIGO'].astype(str) + " - " + df_maestro['PRODUCTO'].astype(str)
     
     col_mat1, col_mat2 = st.columns([3, 1])
     with col_mat1:
@@ -85,9 +86,9 @@ def render(sh):
         cod_item = seleccion_combo.split(" - ")[0]
         nom_item = seleccion_combo.split(" - ")[1]
         
-        # Obtener unidad de medida del maestro de forma segura
-        fila_mat = df_maestro[df_maestro['Código'].astype(str) == cod_item]
-        uni_item = fila_mat['Unidad'].values[0] if not fila_mat.empty else "Und"
+        # Obtener unidad de medida del maestro de forma segura usando tus columnas reales
+        fila_mat = df_maestro[df_maestro['CODIGO'].astype(str) == cod_item]
+        uni_item = fila_mat['UNIDAD'].values[0] if not fila_mat.empty else "Und"
         
         st.session_state.canasta.append({
             "Código": cod_item, "Material": nom_item, "Cantidad": cantidad_item, "Unidad": uni_item
