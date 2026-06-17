@@ -4,29 +4,29 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 
 def conectar_sheets():
-    """
-    Establece la conexión segura con Google Sheets y Google Drive.
-    Busca de forma flexible la estructura correcta de credenciales en st.secrets
-    para evitar errores de formato (client_email, token_uri).
-    """
     try:
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         
-        # 🛡️ Búsqueda inteligente de la subllave del Service Account
-        if "gcp_service_account" in st.secrets:
-            creds_dict = dict(st.secrets["gcp_service_account"])
-        elif "gspread_credentials" in st.secrets:
-            creds_dict = dict(st.secrets["gspread_credentials"])
-        elif "connections" in st.secrets and "gcs" in st.secrets["connections"]:
-            creds_dict = dict(st.secrets["connections"]["gcs"])
-        else:
-            # Si guardaste el JSON directamente en la raíz de Secrets
+        creds_dict = None
+        
+        # 🔎 Buscamos dentro de cada sección de tus secretos cuál contiene la firma de Google
+        for key in st.secrets.keys():
+            # Si es un diccionario y contiene los campos que te pide el error en la imagen
+            if isinstance(st.secrets[key], dict) and "client_email" in st.secrets[key]:
+                creds_dict = dict(st.secrets[key])
+                break
+                
+        # Si no lo encontró en una subllave, intentamos validar si los pusiste en la raíz
+        if creds_dict is None and "client_email" in st.secrets:
             creds_dict = dict(st.secrets)
+            
+        if creds_dict is None:
+            st.error("❌ No se encontró ninguna estructura de Service Account válida en los Secrets de Streamlit.")
+            return None
             
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
         
-        # Abre el libro principal de control logístico
         return client.open("01 - Herramientas") 
     except Exception as e:
         st.error(f"Error de conexión GCP: {e}")
