@@ -1,10 +1,8 @@
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseUpload
 from datetime import datetime
-import io
+import base64
 
 def conectar_sheets():
     """ Establece la conexión segura con Google Sheets usando las credenciales TOML """
@@ -104,73 +102,30 @@ def eliminar_material_maestro(codigo_material):
         return False, f"Error al intentar eliminar: {e}"
 
 def guardar_foto_drive(archivo, almacen, usuario):
-    """ 📸 Sube la imagen a Drive y transfiere la propiedad inmediatamente para no consumir cuota de la cuenta de servicio """
+    """ 📸 Convierte la foto a Base64 de forma segura y la almacena directo en Google Sheets sin usar cuota de Drive """
     try:
         if archivo is None:
             return None
             
-        scopes_drive = ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/drive.file"]
-        
-        if "gcp_service_account" in st.secrets:
-            creds_dict = dict(st.secrets["gcp_service_account"])
-        else:
-            creds_dict = dict(st.secrets)
-            
-        creds = Credentials.from_service_account_info(creds_dict, scopes=scopes_drive)
-        service = build('drive', 'v3', credentials=creds)
-        
-        # ID de tu carpeta de destino en Google Drive
-        id_carpeta_destino = "12MLYN3FNhEnw3gjRAuphepLWWDccoBDc"
-        
-        fecha_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        nombre_archivo_drive = f"AUDITORIA_{almacen}_{fecha_str}.jpg"
-        
-        file_metadata = {
-            'name': nombre_archivo_drive,
-            'parents': [id_carpeta_destino]
-        }
-        
+        # 🎯 CONVERSIÓN ELÉCTRICA: Convertimos la imagen a texto plano binario
         archivo.seek(0)
-        archivo_bytes = io.BytesIO(archivo.read())
-        media = MediaIoBaseUpload(archivo_bytes, mimetype=archivo.type, resumable=True)
+        imagen_bytes = archivo.read()
+        base64_encoded = base64.b64encode(imagen_bytes).decode('utf-8')
         
-        # 1. Subir el archivo temporalmente
-        archivo_subido = service.files().create(
-            body=file_metadata, 
-            media_body=media, 
-            fields='id, webViewLink, owners',
-            supportsAllDrives=True
-        ).execute()
+        # Guardamos el string estructurado para que Python sepa qué tipo de archivo es al renderizarlo
+        string_final_imagen = f"data:{archivo.type};base64,{base64_encoded}"
         
-        file_id = archivo_subido.get('id')
-        enlace_foto_individual = archivo_subido.get('webViewLink')
-        
-        # 2. 🎯 SOLUCIÓN AL ERROR DE CUOTA: Hacer que el enlace sea público para lectura
-        try:
-            permission = {'type': 'anyone', 'role': 'reader'}
-            service.permissions().create(
-                fileId=file_id, 
-                body=permission,
-                supportsAllDrives=True
-            ).execute()
-        except Exception:
-            pass
-            
-        # 3. Registrar la traza en tu pestaña 'fotos' de Google Sheets
+        # Almacenar traza y texto en la pestaña 'fotos' de tu Sheets
         sh = conectar_sheets()
         if sh:
             ws_fotos = sh.worksheet("fotos")
             fecha_registro = datetime.now().strftime("%Y-%m-%d %H:%M")
-            ws_fotos.append_row([fecha_registro, almacen, usuario, enlace_foto_individual])
             
-        return enlace_foto_individual
+            # Subimos los metadatos y el texto largo de la foto a la fila
+            ws_fotos.append_row([fecha_registro, almacen, usuario, string_final_imagen])
+            
+        return "Guardado en Base de Datos"
         
     except Exception as e:
-        st.error(f"Error crítico en Drive API: {e}")
-        return None
-            
-        return enlace_foto_individual
-        
-    except Exception as e:
-        st.error(f"Error crítico en Drive API: {e}")
+        st.error(f"Error al procesar la conversión de imagen: {e}")
         return None
