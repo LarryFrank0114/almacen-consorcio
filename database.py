@@ -23,7 +23,7 @@ def conectar_sheets():
         
         # 💡 Reemplaza este texto por el ID real de tu Google Sheets para asegurar la apertura directa:
         # El ID lo encuentras en la URL de tu navegador: https://docs.google.com/spreadsheets/d/TU_ID_AQUI/edit
-        id_hoja_calculo = "1BxiMVs0XRA5nFMdKvBdBZjXUUYqmgBc74t3iZX-64Gs" # <- Coloca tu ID real aquí
+        id_hoja_calculo = "1kQXECbqfkd_pYqxYPHQ2mv9ZsFyT3VoUONbzlmd7FOc" # <- Coloca tu ID real aquí
         
         try:
             return client.open_by_key(id_hoja_calculo)
