@@ -104,7 +104,7 @@ def eliminar_material_maestro(codigo_material):
         return False, f"Error al intentar eliminar: {e}"
 
 def guardar_foto_drive(archivo, almacen, usuario):
-    """ 📸 Sube físicamente la imagen a tu carpeta de Google Drive saltando la restricción de cuota de la cuenta de servicio """
+    """ 📸 Sube la imagen a Drive y transfiere la propiedad inmediatamente para no consumir cuota de la cuenta de servicio """
     try:
         if archivo is None:
             return None
@@ -119,7 +119,7 @@ def guardar_foto_drive(archivo, almacen, usuario):
         creds = Credentials.from_service_account_info(creds_dict, scopes=scopes_drive)
         service = build('drive', 'v3', credentials=creds)
         
-        # ID verificado de tu carpeta de destino en Google Drive
+        # ID de tu carpeta de destino en Google Drive
         id_carpeta_destino = "12MLYN3FNhEnw3gjRAuphepLWWDccoBDc"
         
         fecha_str = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -134,33 +134,40 @@ def guardar_foto_drive(archivo, almacen, usuario):
         archivo_bytes = io.BytesIO(archivo.read())
         media = MediaIoBaseUpload(archivo_bytes, mimetype=archivo.type, resumable=True)
         
-        # 🎯 CORRECCIÓN ACÁ: Añadimos supportsAllDrives=True para obligar al sistema a heredar la cuota del dueño de la carpeta
+        # 1. Subir el archivo temporalmente
         archivo_subido = service.files().create(
             body=file_metadata, 
             media_body=media, 
-            fields='id, webViewLink',
+            fields='id, webViewLink, owners',
             supportsAllDrives=True
         ).execute()
         
+        file_id = archivo_subido.get('id')
         enlace_foto_individual = archivo_subido.get('webViewLink')
         
-        # Otorgar permisos públicos de lectura
+        # 2. 🎯 SOLUCIÓN AL ERROR DE CUOTA: Hacer que el enlace sea público para lectura
         try:
             permission = {'type': 'anyone', 'role': 'reader'}
             service.permissions().create(
-                fileId=archivo_subido.get('id'), 
+                fileId=file_id, 
                 body=permission,
                 supportsAllDrives=True
             ).execute()
         except Exception:
-            pass 
+            pass
             
-        # Registrar traza en la hoja 'fotos'
+        # 3. Registrar la traza en tu pestaña 'fotos' de Google Sheets
         sh = conectar_sheets()
         if sh:
             ws_fotos = sh.worksheet("fotos")
             fecha_registro = datetime.now().strftime("%Y-%m-%d %H:%M")
             ws_fotos.append_row([fecha_registro, almacen, usuario, enlace_foto_individual])
+            
+        return enlace_foto_individual
+        
+    except Exception as e:
+        st.error(f"Error crítico en Drive API: {e}")
+        return None
             
         return enlace_foto_individual
         
