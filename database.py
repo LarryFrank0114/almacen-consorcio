@@ -1,131 +1,123 @@
 import streamlit as st
-import gspread
-from google.oauth2.service_account import Credentials
-from datetime import datetime
-import base64
+import pandas as pd
+import database as db
 
-def conectar_sheets():
-    """ Establece la conexión segura con Google Sheets usando las credenciales TOML """
-    try:
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        
-        if "gcp_service_account" in st.secrets:
-            creds_dict = dict(st.secrets["gcp_service_account"])
-        else:
-            creds_dict = dict(st.secrets)
-            
-        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-        client = gspread.authorize(creds)
-        
-        return client.open("01-Herramientas") 
-        
-    except Exception as e:
-        st.error(f"Error de conexión GCP: {e}")
-        return None
+# 🎯 IMPORTACIÓN COMPATIBLE DE ESTILOS (Soporta rutas absolutas y relativas del servidor)
+try:
+    from modulos import estilos
+except ModuleNotFoundError:
+    import estilos
 
-def registrar_transaccion_avanzada(tipo, documento, almacen, fecha, solicitante, usuario, obs, canasta):
-    """ Registra los ingresos/egresos en el Historial y altera el Stock en el Inventario """
-    sh = conectar_sheets()
-    if not sh: 
-        return False, "Sin conexión con la base de datos central."
+def render(sh):
+    # 🌎 1. Selector Global de Idioma en la barra lateral
+    if "idioma" not in st.session_state:
+        st.session_state.idioma = "es"
+        
+    idioma_sel = st.sidebar.selectbox("🌐 Language / 語言", ["Español", "繁體中文 (Chino Tradicional)"])
+    st.session_state.idioma = "es" if "Español" in idioma_sel else "zh"
     
-    try:
-        ws_historial = sh.worksheet("historial")
-        ws_inventario = sh.worksheet("inventario")
-        inv_data = ws_inventario.get_all_records()
-        
-        for item in canasta:
-            ws_historial.append_row([
-                fecha, tipo, documento, almacen, item['Código'], 
-                item['Material'], item['Cantidad'], item['Unidad'], 
-                solicitante, usuario, obs
-            ])
-            
-            fila_encontrada = None
-            stock_actual = 0
-            
-            for idx, row in enumerate(inv_data):
-                if str(row['Almacén']).strip() == str(almacen).strip() and str(row['Código']).strip() == str(item['Código']).strip():
-                    fila_encontrada = idx + 2
-                    stock_actual = int(row['Stock']) if row['Stock'] != "" else 0
-                    break
-            
-            if "Ingreso" in tipo or "Devolución" in tipo:
-                nuevo_stock = stock_actual + int(item['Cantidad'])
-            else:
-                nuevo_stock = max(0, stock_actual - int(item['Cantidad']))
-                
-            if fila_encontrada:
-                ws_inventario.update_cell(fila_encontrada, 5, nuevo_stock)
-            else:
-                ws_inventario.append_row([almacen, item['Código'], item['Material'], "Ubicación General", nuevo_stock])
-                
-        return True, "Transacción completada con éxito. Inventarios actualizados en la nube."
-    except Exception as e:
-        return False, f"Error crítico al procesar la transacción: {e}"
+    # Consumir el diccionario del archivo estilos.py externo
+    lang = estilos.obtener_traducciones()[st.session_state.idioma]
+    
+    # 🎨 2. Aplicar estilos visuales y cabecera corporativa externa
+    estilos.aplicar_estilos_y_cabecera(st.session_state.idioma)
+    
+    st.markdown("---")
+    
+    # 🔐 3. Control de Permisos por Usuario
+    usuario_actual = st.session_state.get("username", "Invitado")
+    tiene_permiso_crud = usuario_actual in ["Larry Frank", "Supervisor Almacen", "Admin"]
 
-def modificar_material_maestro(codigo_material, nuevo_nombre, nueva_unidad):
-    """ CRUD: Actualiza el nombre o unidad de un material en la pestaña 'maestro' """
-    sh = conectar_sheets()
-    if not sh: 
-        return False, "Sin conexión con la base de datos."
+    # 📊 4. Carga segura del catálogo maestro desde la nube
     try:
         ws_maestro = sh.worksheet("maestro")
-        data = ws_maestro.get_all_records()
-        
-        for idx, row in enumerate(data):
-            if str(row['Código']).strip() == str(codigo_material).strip():
-                fila_a_editar = idx + 2
-                ws_maestro.update_cell(fila_a_editar, 2, nuevo_nombre)
-                ws_maestro.update_cell(fila_a_editar, 3, nueva_unidad)
-                return True, "Material modificado correctamente en la base de datos."
-        return False, "No se encontró el código del material solicitado."
+        df_maestro = pd.DataFrame(ws_maestro.get_all_records())
     except Exception as e:
-        return False, f"Error al intentar modificar: {e}"
+        st.error(f"❌ Error al conectar con el maestro: {e}")
+        return
 
-def eliminar_material_maestro(codigo_material):
-    """ CRUD: Elimina físicamente la fila de un material en la pestaña 'maestro' """
-    sh = conectar_sheets()
-    if not sh: 
-        return False, "Sin conexión con la base de datos."
-    try:
-        ws_maestro = sh.worksheet("maestro")
-        data = ws_maestro.get_all_records()
-        
-        for idx, row in enumerate(data):
-            if str(row['Código']).strip() == str(codigo_material).strip():
-                fila_a_borrar = idx + 2 
-                ws_maestro.delete_rows(fila_a_borrar)
-                return True, "El material ha sido eliminado del catálogo maestro."
-        return False, "No se encontró el código del material a eliminar."
-    except Exception as e:
-        return False, f"Error al intentar eliminar: {e}"
+    if df_maestro.empty:
+        st.warning("⚠️ El catálogo maestro de materiales está vacío.")
+        return
 
-def guardar_foto_drive(archivo, almacen, usuario):
-    """ 📸 Convierte la foto a Base64 de forma segura y la almacena directo en Google Sheets sin usar cuota de Drive """
-    try:
-        if archivo is None:
-            return None
-            
-        # 🎯 CONVERSIÓN ELÉCTRICA: Convertimos la imagen a texto plano binario
-        archivo.seek(0)
-        imagen_bytes = archivo.read()
-        base64_encoded = base64.b64encode(imagen_bytes).decode('utf-8')
+    # Buscador interactivo bilingüe
+    busqueda = st.text_input(f"🔍 {lang['buscar']}", "")
+    if busqueda:
+        df_filtrado = df_maestro[df_maestro['Material'].astype(str).str.contains(busqueda, case=False) | 
+                                 df_maestro['Código'].astype(str).str.contains(busqueda, case=False)]
+    else:
+        df_filtrado = df_maestro
+
+    # Banner informativo estético
+    st.markdown("""
+        <div style='background-color:#ffeeba; padding:10px; border-radius:5px; border-left:6px solid #ffc107; margin-bottom:15px; color: #856404;'>
+            ⚙️ <strong>Aviso / 💡 提示:</strong> Los cambios en esta sección alteran directamente la base de datos maestra del proyecto.
+        </div>
+    """, unsafe_allow_html=True)
+
+    # 🎯 5. Grilla interactiva CRUD
+    col_h1, col_h2, col_h3, col_h4 = st.columns([1.5, 3, 1.5, 2.5])
+    col_h1.markdown(f"**{lang['tabla_codigo']}**")
+    col_h2.markdown(f"**{lang['tabla_material']}**")
+    col_h3.markdown(f"**{lang['tabla_unidad']}**")
+    col_h4.markdown(f"**{lang['tabla_acciones']}**")
+    st.markdown("<hr style='margin:5px 0px;' />", unsafe_allow_html=True)
+
+    for index, fila in df_filtrado.iterrows():
+        c_cod, c_mat, c_uni, c_acc = st.columns([1.5, 3, 1.5, 2.5])
         
-        # Guardamos el string estructurado para que Python sepa qué tipo de archivo es al renderizarlo
-        string_final_imagen = f"data:{archivo.type};base64,{base64_encoded}"
+        c_cod.text(fila['Código'])
+        c_mat.text(fila['Material'])
+        c_uni.text(fila['Unidad'])
         
-        # Almacenar traza y texto en la pestaña 'fotos' de tu Sheets
-        sh = conectar_sheets()
-        if sh:
-            ws_fotos = sh.worksheet("fotos")
-            fecha_registro = datetime.now().strftime("%Y-%m-%d %H:%M")
+        with c_acc:
+            col_b1, col_b2 = st.columns(2)
             
-            # Subimos los metadatos y el texto largo de la foto a la fila
-            ws_fotos.append_row([fecha_registro, almacen, usuario, string_final_imagen])
-            
-        return "Guardado en Base de Datos"
+            # --- Acción: Modificar ---
+            if col_b1.button(lang['btn_modificar'], key=f"edit_{fila['Código']}"):
+                if not tiene_permiso_crud:
+                    st.error(lang['error_permiso'])
+                else:
+                    st.session_state[f"modal_edit_{fila['Código']}"] = True
+
+            # --- Acción: Eliminar ---
+            if col_b2.button(lang['btn_eliminar'], key=f"del_{fila['Código']}"):
+                if not tiene_permiso_crud:
+                    st.error(lang['error_permiso'])
+                else:
+                    st.session_state[f"modal_del_{fila['Código']}"] = True
+
+        # Formulario expandible para EDITAR recurso
+        if st.session_state.get(f"modal_edit_{fila['Código']}", False):
+            with st.expander(f"📝 Modificar Recurso: {fila['Código']}", expanded=True):
+                nuevo_nom = st.text_input("Nuevo Nombre del Material:", value=fila['Material'], key=f"txt_n_{fila['Código']}")
+                nueva_uni = st.text_input("Nueva Unidad de Medida:", value=fila['Unidad'], key=f"txt_u_{fila['Código']}")
+                
+                c_mod1, c_mod2 = st.columns(2)
+                if c_mod1.button("💾 Guardar", key=f"save_{fila['Código']}"):
+                    exito, msg = db.modificar_material_maestro(fila['Código'], nuevo_nom, nueva_uni)
+                    if exito:
+                        st.success(msg)
+                        del st.session_state[f"modal_edit_{fila['Código']}"]
+                        st.rerun()
+                if c_mod2.button("❌ Cancelar", key=f"canc_e_{fila['Código']}"):
+                    del st.session_state[f"modal_edit_{fila['Código']}"]
+                    st.rerun()
+
+        # Formulario de confirmación para ELIMINAR recurso
+        if st.session_state.get(f"modal_del_{fila['Código']}", False):
+            with st.error(f"⚠️ {lang['confirmar_eliminar']}: {fila['Material']} ({fila['Código']})"):
+                c_del1, c_del2 = st.columns(2)
+                if c_del1.button("🔥 Sí, Eliminar", key=f"conf_del_{fila['Código']}"):
+                    exito, msg = db.eliminar_material_maestro(fila['Código'])
+                    if exito:
+                        st.success(lang['exito_eliminar'])
+                        del st.session_state[f"modal_del_{fila['Código']}"]
+                        st.rerun()
+                    else:
+                        st.error(msg)
+                if c_del2.button("Cancelar", key=f"canc_d_{fila['Código']}"):
+                    del st.session_state[f"modal_del_{fila['Código']}"]
+                    st.rerun()
         
-    except Exception as e:
-        st.error(f"Error al procesar la conversión de imagen: {e}")
-        return None
+        st.markdown("<hr style='margin:2px 0px; border-top: 1px dashed #ddd;' />", unsafe_allow_html=True)
