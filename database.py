@@ -2,27 +2,40 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
-import json  # 👈 Importante: Necesario para procesar tu string JSON
+import json
 
 def conectar_sheets():
+    """
+    Establece la conexión segura con Google Sheets y Google Drive.
+    Extrae el valor crudo del string JSON para evitar que Streamlit devuelva
+    un objeto Response [200].
+    """
     try:
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         
-        # 🧩 Detectamos si guardaste las credenciales como un string de texto
         if "google_sheets_json" in st.secrets:
-            # Convertimos el string plano de vuelta a un diccionario de Python
-            creds_dict = json.loads(st.secrets["google_sheets_json"])
+            # 💡 Forzamos a obtener el valor en texto puro si Streamlit lo encapsuló
+            json_texto = st.secrets["google_sheets_json"]
+            if hasattr(json_texto, "value"):
+                json_texto = json_texto.value
+                
+            # Limpiamos espacios en blanco o saltos de línea fantasmas
+            json_texto = json_texto.strip()
+            
+            # Convertimos el texto a un diccionario real de Python
+            creds_dict = json.loads(json_texto)
         else:
-            # En caso de que falle o cambie, intentamos buscar de la forma clásica
             creds_dict = dict(st.secrets)
             
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
         
+        # Abre el libro principal de control logístico del consorcio
         return client.open("01 - Herramientas") 
     except Exception as e:
         st.error(f"Error de conexión GCP: {e}")
         return None
+
 def registrar_transaccion_avanzada(tipo, documento, almacen, fecha, solicitante, usuario, obs, canasta):
     """
     Procesa la canasta de materiales afectando dinámicamente las existencias
@@ -95,7 +108,7 @@ def guardar_foto_drive(archivo, almacen, usuario):
             
         ws_fotos = sh.worksheet("fotos")
         
-        # Reemplaza este enlace por el ID de tu carpeta real compartida en Google Drive
+        # Enlace de tu carpeta real compartida en Google Drive donde subes las capturas
         enlace_drive_carpeta = "https://drive.google.com/drive/folders/tu_id_de_carpeta_compartida"
         fecha_str = datetime.now().strftime("%Y-%m-%d %H:%M")
         
