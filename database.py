@@ -29,7 +29,7 @@ def conectar_sheets():
             return client.open_by_key(id_hoja_calculo)
         except:
             # Si el ID de arriba no se ha cambiado o falla, intenta abrirlo por el nombre clásico anterior
-            return client.open("01 - Herramientas")
+            return client.open("Herramientas")
             
     except Exception as e:
         st.error(f"Error de conexión GCP: {e}")
