@@ -9,7 +9,6 @@ import io
 def conectar_sheets():
     """ Establece la conexión segura con Google Sheets usando las credenciales TOML """
     try:
-        # Se añaden los permisos extendidos necesarios para interactuar con la API de archivos de Drive
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         
         if "gcp_service_account" in st.secrets:
@@ -110,38 +109,51 @@ def guardar_foto_drive(archivo, almacen, usuario):
         if archivo is None:
             return None
             
-        # 1. Autenticación extendida con la API de Drive
-        scope = ["https://www.googleapis.com/auth/drive"]
+        # 🎯 SCOPES EXTENDIDOS: Permiso explícito de escritura y lectura de archivos en Drive
+        scopes_drive = ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/drive.file"]
+        
         if "gcp_service_account" in st.secrets:
             creds_dict = dict(st.secrets["gcp_service_account"])
         else:
             creds_dict = dict(st.secrets)
             
-        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scopes_drive)
         service = build('drive', 'v3', credentials=creds)
         
-        # ID real de tu carpeta de destino del Consorcio San Miguel
+        # ID verificado de tu carpeta de destino en Google Drive
         id_carpeta_destino = "12MLYN3FNhEnw3gjRAuphepLWWDccoBDc"
         
-        # Generar nombre único para la foto usando la fecha y hora actual
+        # Estructurar nombre del archivo con marca de tiempo única
         fecha_str = datetime.now().strftime("%Y%m%d_%H%M%S")
         nombre_archivo_drive = f"AUDITORIA_{almacen}_{fecha_str}.jpg"
         
-        # Metadata del archivo en Drive
         file_metadata = {
             'name': nombre_archivo_drive,
             'parents': [id_carpeta_destino]
         }
         
-        # Preparar la carga binaria del archivo subido desde Streamlit
-        archivo_bytes = io.BytesIO(archivo.getvalue())
+        # 🎯 REINICIAR PUNTERO: Forzar lectura completa del búfer de bytes del cargador
+        archivo.seek(0)
+        archivo_bytes = io.BytesIO(archivo.read())
         media = MediaIoBaseUpload(archivo_bytes, mimetype=archivo.type, resumable=True)
         
-        # 2. Ejecutar la subida real a Google Drive
-        archivo_subido = service.files().create(body=file_metadata, media_body=media, fields='id, webViewLink').execute()
+        # Crear archivo físico dentro de la carpeta en Drive
+        archivo_subido = service.files().create(
+            body=file_metadata, 
+            media_body=media, 
+            fields='id, webViewLink'
+        ).execute()
+        
         enlace_foto_individual = archivo_subido.get('webViewLink')
         
-        # 3. Registrar los metadatos y el link directo de la foto en la pestaña 'fotos' de Google Sheets
+        # Otorgar permisos de lectura global al enlace generado automáticamente
+        try:
+            permission = {'type': 'anyone', 'role': 'reader'}
+            service.permissions().create(fileId=archivo_subido.get('id'), body=permission).execute()
+        except Exception:
+            pass 
+            
+        # Almacenar traza en la pestaña 'fotos' de Google Sheets
         sh = conectar_sheets()
         if sh:
             ws_fotos = sh.worksheet("fotos")
@@ -151,5 +163,5 @@ def guardar_foto_drive(archivo, almacen, usuario):
         return enlace_foto_individual
         
     except Exception as e:
-        st.error(f"Error crítico durante el proceso de subida a Drive: {e}")
+        st.error(f"Error crítico en Drive API: {e}")
         return None
