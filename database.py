@@ -5,24 +5,15 @@ from datetime import datetime
 import json
 
 def conectar_sheets():
-    """
-    Establece la conexión segura con Google Sheets y Google Drive.
-    Extrae el valor crudo del string JSON para evitar que Streamlit devuelva
-    un objeto Response [200].
-    """
     try:
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         
         if "google_sheets_json" in st.secrets:
-            # 💡 Forzamos a obtener el valor en texto puro si Streamlit lo encapsuló
             json_texto = st.secrets["google_sheets_json"]
             if hasattr(json_texto, "value"):
                 json_texto = json_texto.value
                 
-            # Limpiamos espacios en blanco o saltos de línea fantasmas
             json_texto = json_texto.strip()
-            
-            # Convertimos el texto a un diccionario real de Python
             creds_dict = json.loads(json_texto)
         else:
             creds_dict = dict(st.secrets)
@@ -30,12 +21,19 @@ def conectar_sheets():
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
         
-        # Abre el libro principal de control logístico del consorcio
-        return client.open("01 - Herramientas") 
+        # 💡 Reemplaza este texto por el ID real de tu Google Sheets para asegurar la apertura directa:
+        # El ID lo encuentras en la URL de tu navegador: https://docs.google.com/spreadsheets/d/TU_ID_AQUI/edit
+        id_hoja_calculo = "1BxiMVs0XRA5nFMdKvBdBZjXUUYqmgBc74t3iZX-64Gs" # <- Coloca tu ID real aquí
+        
+        try:
+            return client.open_by_key(id_hoja_calculo)
+        except:
+            # Si el ID de arriba no se ha cambiado o falla, intenta abrirlo por el nombre clásico anterior
+            return client.open("01 - Herramientas")
+            
     except Exception as e:
         st.error(f"Error de conexión GCP: {e}")
         return None
-
 def registrar_transaccion_avanzada(tipo, documento, almacen, fecha, solicitante, usuario, obs, canasta):
     """
     Procesa la canasta de materiales afectando dinámicamente las existencias
