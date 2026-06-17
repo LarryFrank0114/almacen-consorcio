@@ -101,12 +101,16 @@ def eliminar_material_maestro(codigo_material):
         return False, f"Error al intentar eliminar: {e}"
 
 def guardar_foto_drive(archivo, almacen, usuario):
-    """ Registra la trazabilidad de las auditorías fotográficas en la pestaña 'fotos' """
+    """ 📸 Registra la trazabilidad de las auditorías fotográficas en tu carpeta compartida """
     try:
         sh = conectar_sheets()
-        if not sh: return None
+        if not sh: 
+            return None
         ws_fotos = sh.worksheet("fotos")
-        enlace_drive_carpeta = "https://drive.google.com/drive/folders/12MLYN3FNhEnw3gjRAuphepLWWDccoBDc?usp=sharing"
+        
+        # Enlace real directo corregido para evitar redirecciones de sesión interna /u/0/
+        enlace_drive_carpeta = "https://drive.google.com/drive/folders/12MLYN3FNhEnw3gjRAuphepLWWDccoBDc"
+        
         fecha_str = datetime.now().strftime("%Y-%m-%d %H:%M")
         ws_fotos.append_row([fecha_str, almacen, usuario, enlace_drive_carpeta])
         return enlace_drive_carpeta
