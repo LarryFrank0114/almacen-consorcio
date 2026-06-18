@@ -76,6 +76,5 @@ def main():
     # 📊 3. Conexión segura con la Base de Datos en Google Sheets (Línea 71 corregida)
     sh = db.conectar_sheets()
     if not sh:
-        st.error("❌ Error crítico: No se pudo establecer la comunicación
-                 con el servidor de Google Sheets. Verifica los secrets.")
+        st.error("❌ Error crítico: No se pudo establecer la comunicación con el servidor de Google Sheets. Verifica los secrets.")
         return
