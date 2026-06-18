@@ -1,76 +1,37 @@
 import streamlit as st
 
-def aplicar_estilos_y_cabecera(idioma="es"):
-    """ Aplica el diseño visual CSS y la cabecera del Consorcio San Miguel """
-    titulos = {
-        "es": {
-            "subtitulo": "Consorcio San Miguel · Sistema de Control de Almacén",
-            "lema": "Herramientas y Construcción"
-        },
-        "zh": {
-            "subtitulo": "圣米格尔财团 · 仓库控制系统",
-            "lema": "工具与建筑"
-        }
-    }
-    
-    st.markdown("""
-        <style>
-        .stButton>button.btn-eliminar {
-            background-color: #d9534f !important;
-            color: white !important;
-            border-radius: 5px;
-        }
-        .stButton>button.btn-modificar {
-            background-color: #f0ad4e !important;
-            color: white !important;
-            border-radius: 5px;
-        }
-        .tarjeta-stock {
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-left: 5px solid #007bff;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-    col_logo, col_texto = st.columns([1, 4])
-    with col_logo:
-        logo_url = "https://img.icons8.com/fluent/96/000000/construction.png" 
-        st.image(logo_url, width=90)
-        
-    with col_texto:
-        st.subheader(titulos[idioma]["subtitulo"])
-        st.caption(f"🏗️ {titulos[idioma]['lema']} | Perú - 中国 🇨🇳🇵🇪")
-
 def obtener_traducciones():
-    """ Diccionario bilingüe para la interfaz del Dashboard """
     return {
         "es": {
-            "buscar": "Buscar material...",
+            "buscar": "Buscar Material...",
             "tabla_codigo": "Código",
             "tabla_material": "Material",
             "tabla_unidad": "Unidad",
-            "tabla_stock": "Stock Disponible",
             "tabla_acciones": "Acciones",
-            "btn_modificar": "✏️ Editar",
+            "btn_modificar": "📝 Modificar",
             "btn_eliminar": "🗑️ Eliminar",
-            "confirmar_eliminar": "¿Está seguro de eliminar este recurso del maestro?",
-            "exito_eliminar": "Recurso eliminado correctamente.",
-            "error_permiso": "🚫 No tienes permisos para realizar esta acción."
+            "error_permiso": "❌ No tienes permisos para modificar el catálogo maestro.",
+            "confirmar_eliminar": "Confirmar eliminación",
+            "exito_eliminar": "Material eliminado correctamente."
         },
         "zh": {
-            "buscar": "搜索物料...",
-            "tabla_codigo": "编码",
-            "tabla_material": "材料名称",
-            "tabla_unidad": "单位",
-            "tabla_stock": "可用库存",
+            "buscar": "搜尋材料...",
+            "tabla_codigo": "代碼",
+            "tabla_material": "材料名稱",
+            "tabla_unidad": "單位",
             "tabla_acciones": "操作",
-            "btn_modificar": "✏️ 编辑",
-            "btn_eliminar": "🗑️ 删除",
-            "confirmar_eliminar": "您确定要从主表中删除该资源吗？",
-            "exito_eliminar": "资源成功删除。",
-            "error_permiso": "🚫 您没有执行此操作的权限。"
+            "btn_modificar": "📝 修改",
+            "btn_eliminar": "🗑️ 刪除",
+            "error_permiso": "❌ 您沒有修改主目錄的權限。",
+            "confirmar_eliminar": "確認刪除",
+            "exito_eliminar": "材料已成功刪除。"
         }
     }
+
+def aplicar_estilos_y_cabecera(idioma):
+    if idioma == "es":
+        st.title("📊 Cuadro de Control Operativo")
+        st.subheader("Consorcio San Miguel — Gestión de Infraestructura y Almacenes")
+    else:
+        st.title("📊 營運控制面板")
+        st.subheader("三美工務財團 — 基礎設施與倉庫管理")
