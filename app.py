@@ -1,119 +1,108 @@
 import streamlit as st
-import database as db
+import sys
+import os
 
-# 🌐 Configuración obligatoria de la página (DEBE SER LA PRIMERA LÍNEA DE STREAMLIT)
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+import auth as au     
+import database as db  
+from modulos import home, dashboard, reporte_stock, movimientos, ajustes
+
 st.set_page_config(
     page_title="Consorcio San Miguel",
-    page_icon="🏗️",
+    page_icon="📦",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-def main():
-    # 🌎 1. Inicialización y Gestión bilingüe del estado de la sesión
-    if "idioma" not in st.session_state:
-        st.session_state.idioma = "es"
-        
-    if "logged_in" not in st.session_state:
-        st.session_state.logged_in = False
-        st.session_state.username = None
-
-    # Diccionario local para la pantalla de inicio de sesión
-    textos_auth = {
-        "es": {
-            "bienvenida": "🔒 Control de Acceso · Almacén",
-            "usuario": "Usuario",
-            "clave": "Contraseña",
-            "btn_ingresar": "Ingresar Sistema",
-            "error_auth": "❌ Usuario o contraseña incorrectos.",
-            "logout": "🚪 Cerrar Sesión"
-        },
-        "zh": {
-            "bienvenida": "🔒 访问控制 · 仓库",
-            "usuario": "用户",
-            "clave": "密码",
-            "btn_ingresar": "登录系统",
-            "error_auth": "❌ 用户名 o 密码错误。",
-            "logout": "🚪 注销登录"
+# Inyección de estilos CSS Minimalistas Oficiales
+st.markdown("""
+    <style>
+        .block-container { padding-top: 2rem; padding-bottom: 2rem; }
+        .header-minimal {
+            background-color: #0B2545;
+            padding: 20px 30px;
+            border-radius: 12px;
+            color: white;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid #F57C00;
         }
-    }
-
-    # 🌎 Selector de Idioma exclusivo para la pantalla de Login
-    if not st.session_state.logged_in:
-        idioma_inicial = st.sidebar.selectbox("🌐 Language / 語言", ["Español", "繁體中文 (Chino Tradicional)"], key="lang_login")
-        st.session_state.idioma = "es" if "Español" in idioma_inicial else "zh"
-
-    lang_auth = textos_auth[st.session_state.idioma]
-
-    # 🔐 2. Sistema de Autenticación de Usuarios
-    if not st.session_state.logged_in:
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns([1, 2, 1])
+        .header-title { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+        .header-user { font-size: 13px; opacity: 0.9; font-weight: 500; }
         
-        with col2:
-            st.subheader(lang_auth["bienvenida"])
-            with st.form("formulario_login"):
-                user_input = st.text_input(lang_auth["usuario"], placeholder="Ej. Larry Frank")
-                pass_input = st.text_input(lang_auth["clave"], type="password")
-                btn_submit = st.form_submit_button(lang_auth["btn_ingresar"])
-                
-                if btn_submit:
-                    # Base de datos de usuarios autorizados
-                    usuarios_validos = {
-                        "larry": "noah2026",
-                        "gerencia": "gere123",
-                        "piero": "piero123"
-                    }
-                    
-                    if user_input in usuarios_validos and usuarios_validos[user_input] == pass_input:
-                        st.session_state.logged_in = True
-                        st.session_state.username = user_input
-                        st.rerun()
-                    else:
-                        st.error(lang_auth["error_auth"])
-        return
+        div.stButton > button {
+            background-color: #F57C00 !important;
+            color: white !important;
+            border: none !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            padding: 0.6rem 2rem !important;
+            font-size: 15px !important;
+            width: 100%;
+        }
+        div.stButton > button:hover { background-color: #E65100 !important; }
+        
+        div[data-testid="stSegmentedControl"] button {
+            padding: 12px 24px !important;
+            font-size: 15px !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            border: 1px solid #E2E8F0 !important;
+            background-color: white !important;
+            color: #0B2545 !important;
+        }
+        div[data-testid="stSegmentedControl"] button[aria-checked="true"] {
+            background-color: #0B2545 !important;
+            color: white !important;
+            border-color: #0B2545 !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-    # 📊 3. Conexión segura con la Base de Datos en Google Sheets
-    sh = db.conectar_sheets()
-    if not sh:
-        st.error("❌ Error crítico: No se pudo establecer la comunicación con el servidor de Google Sheets. Verifica los secrets.")
-        return
+au.verificar_sesion()
 
-    # 🧭 4. Menú de Navegación Lateral y Enrutamiento de Módulos
-    st.sidebar.markdown(f"👤 **{st.session_state.username}**")
-    
-    # Menú dinámico bilingüe de navegación
-    opciones_menu = {
-        "es": ["📊 Cuadro de Control (Dashboard)", "📥 Registro de Movimientos", "📸 Auditoría Fotográfica"],
-        "zh": ["📊 仪表板 (Dashboard)", "📥 变动登记", "📸 照片审计"]
-    }
-    
-    menu_seleccionado = st.sidebar.radio(
-        "🗂️ Menú / 菜单", 
-        opciones_menu[st.session_state.idioma]
-    )
+if not st.session_state.logged_in:
+    au.login_form()
+    st.stop()
 
-    st.sidebar.markdown("---")
-    if st.sidebar.button(lang_auth["logout"]):
+sh = db.conectar_sheets()
+if sh is None:
+    st.error("Error crítico de enlace con Google Cloud.")
+    st.stop()
+
+st.markdown(f"""
+    <div class="header-minimal">
+        <div class="header-title">CONSORCIO SAN MIGUEL</div>
+        <div class="header-user">{st.session_state.username} — [{st.session_state.user_role}]</div>
+    </div>
+""", unsafe_allow_html=True)
+
+# Menú con la nueva sección Inicio (Carátula)
+opciones_menu = ["Inicio", "Dashboard", "Reporte Stock", "Movimientos", "Ajustes"]
+opcion_seleccionada = st.segmented_control("Menu", options=opciones_menu, default="Inicio", label_visibility="collapsed")
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Enrutador de módulos
+if opcion_seleccionada == "Inicio":
+    home.render(sh)
+elif opcion_seleccionada == "Dashboard":
+    dashboard.render(sh)
+elif opcion_seleccionada == "Reporte Stock":
+    reporte_stock.render(sh)
+elif opcion_seleccionada == "Movimientos":
+    movimientos.render(sh)
+elif opcion_seleccionada == "Ajustes":
+    ajustes.render(sh)
+
+st.markdown("<br><hr>", unsafe_allow_html=True)
+col_out1, col_out2, col_out3 = st.columns([1, 1, 1])
+with col_out2:
+    if st.button("Salir del Sistema", key="logout_btn"):
         st.session_state.logged_in = False
-        st.session_state.username = None
+        st.session_state.user_role = None
+        st.session_state.username = ""
         st.rerun()
-
-    # 🚀 5. Renderizado del módulo seleccionado
-    # Módulo Dashboard (Se alimenta de modulos/dashboard.py y modulos/estilos.py)
-    if "Dashboard" in menu_seleccionado or "仪表板" in menu_seleccionado:
-        from modulos import dashboard
-        dashboard.render(sh)
-        
-    # Módulo de Transacciones (Ingresos / Egresos)
-    elif "Movimientos" in menu_seleccionado or "变动登记" in menu_seleccionado:
-        st.title("📥 Registro de Movimientos / 变动登记")
-        st.info("Espacio reservado para el formulario de ingresos, egresos e inventarios.")
-        
-    # Módulo de Auditoría Fotográfica
-    elif "Fotográfica" in menu_seleccionado or "照片审计" in menu_seleccionado:
-        st.title("📸 Auditoría Fotográfica / 照片审计")
-        st.info("Espacio para la visualización y captura de imágenes Base64 guardadas en la pestaña 'fotos'.")
-
-if __name__ == "__main__":
-    main()
