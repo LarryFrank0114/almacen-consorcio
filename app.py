@@ -1,7 +1,7 @@
 import streamlit as st
 import database as db
 
-# Configuración obligatoria de la página de Streamlit (Debe ser la primera línea de ejecución)
+# 🌐 Configuración obligatoria de la página (DEBE SER LA PRIMERA LÍNEA DE STREAMLIT)
 st.set_page_config(
     page_title="Consorcio San Miguel",
     page_icon="🏗️",
@@ -33,12 +33,12 @@ def main():
             "usuario": "用户",
             "clave": "密码",
             "btn_ingresar": "登录系统",
-            "error_auth": "❌ 用户名 or 密码错误。",
+            "error_auth": "❌ 用户名 o 密码错误。",
             "logout": "🚪 注销登录"
         }
     }
 
-    # 🌎 Selector de Idioma exclusivo para la pantalla de Login (Luego el dashboard tomará el control)
+    # 🌎 Selector de Idioma exclusivo para la pantalla de Login
     if not st.session_state.logged_in:
         idioma_inicial = st.sidebar.selectbox("🌐 Language / 語言", ["Español", "繁體中文 (Chino Tradicional)"], key="lang_login")
         st.session_state.idioma = "es" if "Español" in idioma_inicial else "zh"
@@ -55,10 +55,10 @@ def main():
             with st.form("formulario_login"):
                 user_input = st.text_input(lang_auth["usuario"], placeholder="Ej. Larry Frank")
                 pass_input = st.text_input(lang_auth["clave"], type="password")
-                btn_submit = st.form_submit_with_button_options if hasattr(st, "form_submit_with_button_options") else st.form_submit_button(lang_auth["btn_ingresar"])
+                btn_submit = st.form_submit_button(lang_auth["btn_ingresar"])
                 
                 if btn_submit:
-                    # Base de datos local de usuarios autorizados
+                    # Base de datos de usuarios autorizados
                     usuarios_validos = {
                         "Larry Frank": "sm2026",
                         "Supervisor Almacen": "almacen2026",
@@ -73,10 +73,47 @@ def main():
                         st.error(lang_auth["error_auth"])
         return
 
-    # 📊 3. Conexión segura con la Base de Datos en Google Sheets (Línea 71 corregida)
+    # 📊 3. Conexión segura con la Base de Datos en Google Sheets
     sh = db.conectar_sheets()
     if not sh:
         st.error("❌ Error crítico: No se pudo establecer la comunicación con el servidor de Google Sheets. Verifica los secrets.")
         return
 
+    # 🧭 4. Menú de Navegación Lateral y Enrutamiento de Módulos
+    st.sidebar.markdown(f"👤 **{st.session_state.username}**")
+    
+    # Menú dinámico bilingüe de navegación
+    opciones_menu = {
+        "es": ["📊 Cuadro de Control (Dashboard)", "📥 Registro de Movimientos", "📸 Auditoría Fotográfica"],
+        "zh": ["📊 仪表板 (Dashboard)", "📥 变动登记", "📸 照片审计"]
+    }
+    
+    menu_seleccionado = st.sidebar.radio(
+        "🗂️ Menú / 菜单", 
+        opciones_menu[st.session_state.idioma]
+    )
 
+    st.sidebar.markdown("---")
+    if st.sidebar.button(lang_auth["logout"]):
+        st.session_state.logged_in = False
+        st.session_state.username = None
+        st.rerun()
+
+    # 🚀 5. Renderizado del módulo seleccionado
+    # Módulo Dashboard (Se alimenta de modulos/dashboard.py y modulos/estilos.py)
+    if "Dashboard" in menu_seleccionado or "仪表板" in menu_seleccionado:
+        from modulos import dashboard
+        dashboard.render(sh)
+        
+    # Módulo de Transacciones (Ingresos / Egresos)
+    elif "Movimientos" in menu_seleccionado or "变动登记" in menu_seleccionado:
+        st.title("📥 Registro de Movimientos / 变动登记")
+        st.info("Espacio reservado para el formulario de ingresos, egresos e inventarios.")
+        
+    # Módulo de Auditoría Fotográfica
+    elif "Fotográfica" in menu_seleccionado or "照片审计" in menu_seleccionado:
+        st.title("📸 Auditoría Fotográfica / 照片审计")
+        st.info("Espacio para la visualización y captura de imágenes Base64 guardadas en la pestaña 'fotos'.")
+
+if __name__ == "__main__":
+    main()
