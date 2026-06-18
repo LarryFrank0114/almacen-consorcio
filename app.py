@@ -60,9 +60,9 @@ def main():
                 if btn_submit:
                     # Base de datos de usuarios autorizados
                     usuarios_validos = {
-                        "Larry Frank": "sm2026",
-                        "Supervisor Almacen": "almacen2026",
-                        "Admin": "admin99"
+                        "larry": "noah2026",
+                        "gerencia": "gere123",
+                        "piero": "piero123"
                     }
                     
                     if user_input in usuarios_validos and usuarios_validos[user_input] == pass_input:
