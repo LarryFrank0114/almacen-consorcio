@@ -42,7 +42,7 @@ def registrar_transaccion_avanzada(tipo, documento, almacen, fecha, solicitante,
             # Buscar coincidencia exacta en la hoja de inventarios consolidados
             fila_encontrada = None
             stock_actual = 0
-            foridx, row in enumerate(inv_data, start=2):
+            for idx, row in enumerate(inv_data, start=2):
                 if str(row.get('Almacén', '')).strip() == str(almacen).strip() and str(row.get('Código', '')).strip() == str(item['Código']).strip():
                     fila_encontrada = idx
                     stock_actual = int(row['Stock']) if row['Stock'] != "" else 0
