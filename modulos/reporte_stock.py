@@ -4,18 +4,38 @@ import database as db
 import re
 
 def extraer_coordenadas_o_url(texto):
-    """Genera la URL correcta de incrustación para iFrames de Google Maps"""
+    """
+    Formatea de manera estricta y segura cualquier entrada de Google Maps 
+    para forzar que el iFrame de Streamlit cargue el mapa interactivo de forma legal.
+    """
     texto_str = str(texto).strip()
-    if "maps.google" in texto_str or "http" in texto_str:
-        if "embed" not in texto_str:
-            return texto_str.replace("/maps/place/", "/maps/embed/").replace("/maps/", "/maps/embed/")
-        return texto_str
     
-    # Intenta capturar si son coordenadas puras Lat, Lon (ej: -12.04, -77.03)
-    patron = r'[-+]?\d*\.\d+|\d+'
-    coordenadas = re.findall(patron, texto_str)
+    # CASO 1: Si es un enlace largo o corto de compartir de Google Maps
+    if "maps.google" in texto_str or "goo.gl/maps" in texto_str or texto_str.startswith("http"):
+        # Si ya contiene el formato embebido correcto, lo dejamos pasar
+        if "/embed" in texto_str:
+            return texto_str
+        
+        # Intentamos extraer latitud y longitud incrustados en la misma URL de Google Maps (ej: @-12.0431,-77.0254)
+        patron_url = r'@([-+]?\d*\.\d+),([-+]?\d*\.\d+)'
+        match = re.search(patron_url, texto_str)
+        if match:
+            lat, lon = match.group(1), match.group(2)
+            return f"https://maps.google.com/maps?q={lat},{lon}&z=15&output=embed"
+            
+        # Si es un enlace limpio sin coordenadas explícitas, forzamos el parámetro de salida embebida
+        if "q=" not in texto_str:
+            return f"https://maps.google.com/maps?q={texto_str}&z=15&output=embed"
+        
+        return texto_str + "&output=embed"
+    
+    # CASO 2: Si el usuario ingresó coordenadas puras separadas por coma (ej: -12.0463, -77.0427)
+    patron_coor = r'[-+]?\d*\.\d+|\d+'
+    coordenadas = re.findall(patron_coor, texto_str)
     if len(coordenadas) >= 2:
-        return f"https://maps.google.com/maps?q={coordenadas[0]},{coordenadas[1]}&z=15&output=embed"
+        lat, lon = coordenadas[0], coordenadas[1]
+        return f"https://maps.google.com/maps?q={lat},{lon}&z=15&output=embed"
+        
     return None
 
 def render(sh):
@@ -82,14 +102,15 @@ def render(sh):
         
         if not df_ub_sede.empty:
             info_sede = df_ub_sede.iloc[-1]
-            col_mapa, col_datos = st.columns([1.3, 1])
+            col_mapa, col_datos = st.columns([1.4, 1])
             
             with col_mapa:
                 url_mapa = extraer_coordenadas_o_url(info_sede['Ubicacion'])
                 if url_mapa:
-                    st.components.v1.iframe(url_mapa, height=280, scrolling=False)
+                    # Implementación limpia usando la URL nativa de mapas interactivos oficiales de Google
+                    st.components.v1.iframe(url_mapa, height=320, scrolling=True)
                 else:
-                    st.warning("⚠️ Formato de localización no compatible para mapa interactivo.")
+                    st.warning("⚠️ Formato de localización vacío o no compatible en la base de datos.")
             
             with col_datos:
                 st.markdown("**📝 Datos Técnicos de Entrada**")
@@ -101,8 +122,8 @@ def render(sh):
                         st.image(enlace_foto, caption=f"Fachada de {almacen_a_consultar}", use_container_width=True)
         else:
             st.info("ℹ️ Almacén seleccionado sin parámetros geográficos configurados en Ajustes.")
-    except Exception:
-        st.info("Aún no existen registros cartográficos en la pestaña 'ubicaciones'.")
+    except Exception as e:
+        st.info(f"Aún no existen registros cartográficos estructurados: {e}")
 
     # 📷 GALERÍA DE INSPECCIONES EN MINIATURAS
     st.markdown("---")
@@ -134,14 +155,14 @@ def render(sh):
                 # Desplegar en cuadrículas de 3 columnas
                 for i in range(0, len(registros), 3):
                     cols_grid = st.columns(3)
-                    for j, (_, row) in enumerate(registros.iloc[i:i+3].iterrows()):
-                        with cols_grid[j]:
+                    for k, (_, row) in enumerate(registros.iloc[i:i+3].iterrows()):
+                        with cols_grid[k]:
                             st.caption(f"**{row['Almacen']}**\n\n📅 {row['Fecha']}")
                             if str(row['Enlace']).startswith("data:image"):
                                 with st.popover("🔎 Ver Foto", use_container_width=True):
                                     st.image(row['Enlace'], use_container_width=True, caption=f"Por: {row['Usuario']}")
                             else:
-                                st.error("Archivo corrupto.")
+                                st.error("Filtro no soportado.")
             else:
                 st.info("Sin registros fotográficos recientes para estas sedes.")
         except Exception:
