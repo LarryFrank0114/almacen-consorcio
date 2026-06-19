@@ -89,7 +89,7 @@ def render(sh):
                 except Exception as e:
                     st.error(f"Error al escribir la ubicación en Google Sheets: {e}")
 
-    st.markdown("<br>##### **Catálogo Central Vigilado Actual**")
+    st.markdown("**Catálogo Central Vigilado Actual**")
     if not st.session_state.maestro_materiales.empty:
         st.dataframe(st.session_state.maestro_materiales, use_container_width=True, hide_index=True)
     else:
