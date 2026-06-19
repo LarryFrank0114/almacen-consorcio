@@ -148,7 +148,7 @@ def render(sh):
                     st.success("Imagen indexada de forma permanente.")
                     st.rerun()
 
-    with col_f2:
+with col_f2:
         st.markdown("#### Mosaico de Capturas Recientes")
         try:
             df_fotos = pd.DataFrame(sh.worksheet("fotos").get_all_records())
@@ -157,20 +157,19 @@ def render(sh):
             if not df_fotos_filtradas.empty:
                 registros = df_fotos_filtradas.iloc[::-1].head(6)
                 
-                # Desplegar en cuadrículas de 3 columnas
                 for i in range(0, len(registros), 3):
                     cols_grid = st.columns(3)
                     for k, (_, row) in enumerate(registros.iloc[i:i+3].iterrows()):
                         with cols_grid[k]:
                             st.caption(f"**{row['Almacen']}**\n\n📅 {row['Fecha']}")
-                            # Forzamos la visualización limpia si contiene los binarios Base64
                             link_imagen = str(row['Enlace']).strip()
-                            if link_imagen.startswith("data:image"):
+                            
+                            # Si hay links en base64 antiguos o links directos de Google Drive configurados
+                            if link_imagen.startswith("data:image") or link_imagen.startswith("http"):
                                 with st.popover("🔎 Ver Foto", use_container_width=True):
                                     st.image(link_imagen, use_container_width=True, caption=f"Por: {row['Usuario']}")
                             else:
-                                st.caption("🔗 _Link antiguo registrado_")
-                                st.markdown(f"[Ver en Drive]({link_imagen})")
+                                st.caption("⚠️ Registro sin origen visual compatible.")
             else:
                 st.info("Sin registros fotográficos recientes para estas sedes.")
         except Exception:
