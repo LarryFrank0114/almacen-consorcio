@@ -102,7 +102,6 @@ def render(sh):
             info_sede = df_ub_sede.iloc[-1]
             col_mapa, col_datos = st.columns([1.4, 1])
             
-            # Extraer coordenadas limpias para el botón de navegación GPS externa
             raw_ubicacion = str(info_sede['Ubicacion']).strip()
             
             with col_mapa:
@@ -116,7 +115,6 @@ def render(sh):
                 st.markdown("**📝 Datos Técnicos de Entrada**")
                 st.info(f"**Referencias:**\n\n{info_sede['Referencias']}")
                 
-                # 🌐 BOTÓN DE NAVEGACIÓN GPS EN DIRECTO PARA EL SUPERVISOR
                 if "," in raw_ubicacion or raw_ubicacion.startswith("http"):
                     link_navegacion = raw_ubicacion if raw_ubicacion.startswith("http") else f"https://www.google.com/maps/search/?api=1&query={raw_ubicacion}"
                     st.link_button("🚗 Iniciar Navegación GPS (Google Maps)", link_navegacion, use_container_width=True, type="primary")
@@ -148,7 +146,7 @@ def render(sh):
                     st.success("Imagen indexada de forma permanente.")
                     st.rerun()
 
-with col_f2:
+    with col_f2:
         st.markdown("#### Mosaico de Capturas Recientes")
         try:
             df_fotos = pd.DataFrame(sh.worksheet("fotos").get_all_records())
@@ -164,7 +162,6 @@ with col_f2:
                             st.caption(f"**{row['Almacen']}**\n\n📅 {row['Fecha']}")
                             link_imagen = str(row['Enlace']).strip()
                             
-                            # Si hay links en base64 antiguos o links directos de Google Drive configurados
                             if link_imagen.startswith("data:image") or link_imagen.startswith("http"):
                                 with st.popover("🔎 Ver Foto", use_container_width=True):
                                     st.image(link_imagen, use_container_width=True, caption=f"Por: {row['Usuario']}")
