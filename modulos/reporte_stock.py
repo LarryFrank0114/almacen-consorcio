@@ -1,7 +1,24 @@
 import streamlit as st
 import pandas as pd
 import database as db
-from datetime import datetime
+import re
+
+def extraer_coordenadas_o_url(texto):
+    """Convierte un enlace normal de Google Maps en un mapa embebido integrable en iframe"""
+    if "maps.google" in texto or "googlesource" in texto or texto.startswith("http"):
+        # Si es un enlace para compartir normal, intentamos formatearlo para embed
+        if "embed" not in texto:
+            # Reemplazo rápido para forzar la visualización de mapas embebidos interactivos
+            return texto.replace("/maps/", "/maps/embed/")
+        return texto
+    
+    # Si ingresaron coordenadas directamente tipo "-12.0463, -77.0427"
+    patron = r'[-+]?\d*\.\d+|\d+'
+    coordenadas = re.findall(patron, texto)
+    if len(coordenadas) >= 2:
+        lat, lon = coordenadas[0], coordenadas[1]
+        return f"https://maps.google.com/maps?q={lat},{lon}&z=15&output=embed"
+    return None
 
 def render(sh):
     st.markdown("### Reporte de Existencias Consolidadas")
@@ -40,10 +57,9 @@ def render(sh):
         else:
             almacenes_permitidos = almacen_preferencial
     else:
-        # Larry y Supervisión tienen acceso total inmediato
         almacenes_permitidos = list(df_inv['Almacén'].unique())
 
-    # Selector de sedes a auditar (se muestra si tiene acceso total o activó el switch)
+    # Selector de sedes a auditar
     if es_admin_o_super or (not es_admin_o_super and ver_todo):
         filtro_almacen = st.multiselect("Seleccione las sedes a visualizar:", options=list(df_inv['Almacén'].unique()), default=almacenes_permitidos)
     else:
@@ -56,65 +72,101 @@ def render(sh):
     if buscar:
         df_filtrado = df_filtrado[df_filtrado['Material'].astype(str).str.contains(buscar, case=False) | df_filtrado['Código'].astype(str).str.contains(buscar, case=False)]
 
-    # Desplegar tabla oficial sin índices en modo lectura
+    # Desplegar tabla oficial
     st.dataframe(df_filtrado, use_container_width=True, hide_index=True)
 
-    # 📸 MOSTRAR INFORMACIÓN GEOGRÁFICA Y DE REFERENCIAS DEL ALMACÉN SELECCIONADO
+    # 🏢 SECCIÓN REDISEÑADA: UBICACIÓN GEOGRÁFICA INTERACTIVA CON MAPAS E IMÁGENES
     st.markdown("---")
-    st.markdown("### 🏢 Ubicación y Datos de Referencia de Sedes")
+    st.markdown("### 🏢 Infraestructura y Ubicación en Tiempo Real")
+    
     try:
         df_ubicaciones = pd.DataFrame(sh.worksheet("ubicaciones").get_all_records())
-        # Si se está filtrando un único almacén en la tabla superior o seleccionado en el combo, mostrar sus datos
-        almacen_a_consultar = filtro_almacen[0] if len(filtro_almacen) == 1 else st.selectbox("Seleccione Almacén para ver detalles de infraestructura:", options=filtro_almacen)
+        almacen_a_consultar = filtro_almacen[0] if len(filtro_almacen) == 1 else st.selectbox("Seleccione Almacén para auditar infraestructura:", options=filtro_almacen)
         
         df_ub_sede = df_ubicaciones[df_ubicaciones['Almacen'] == almacen_a_consultar]
+        
         if not df_ub_sede.empty:
             info_sede = df_ub_sede.iloc[-1] # Traer el registro más reciente configurado
-            col_inf1, col_inf2 = st.columns([1, 1])
-            with col_inf1:
-                st.markdown(f"**📍 Coordenadas / Enlace de Ubicación:**")
-                st.write(info_sede['Ubicacion'])
-                st.markdown(f"**📝 Referencias de Acceso:**")
-                st.info(info_sede['Referencias'])
-            with col_inf2:
-                if info_sede['Enlace_Foto'] and info_sede['Enlace_Foto'] != "":
-                    st.markdown("**📸 Fotografía de Fachada / Lugar:**")
-                    st.markdown(f"[🔗 Abrir Imagen en Alta Resolución]({info_sede['Enlace_Foto']})")
+            
+            col_mapa, col_datos = st.columns([1.2, 1])
+            
+            with col_mapa:
+                st.markdown("**📍 Geolocalización Satelital Interactiva**")
+                url_mapa = extraer_coordenadas_o_url(str(info_sede['Ubicacion']))
+                if url_mapa:
+                    # Embeber el mapa de Google Maps directamente en la interfaz de Streamlit
+                    st.components.v1.iframe(url_mapa, height=300, scrolling=False)
+                else:
+                    st.warning("⚠️ El formato del enlace o coordenadas provisto en Ajustes no es válido para incrustar.")
+                    st.caption(f"Texto registrado: {info_sede['Ubicacion']}")
+            
+            with col_datos:
+                st.markdown("**📝 Datos de Referencia y Acceso**")
+                st.info(f"**Referencias de Ingreso:**\n\n{info_sede['Referencias']}")
+                st.caption(f"Configurado por: {info_sede['Configurado_Por']} | Fecha: {info_sede['Fecha']}")
+                
+                # Visualización de la foto de portada del almacén corregida
+                enlace_foto = info_sede['Enlace_Foto']
+                if enlace_foto and enlace_foto != "" and not str(enlace_foto).startswith("Error"):
+                    st.markdown("**📸 Foto de Fachada Principal**")
+                    
+                    # Miniatura interactiva con Popover para agrandar sin perder la vista
+                    with st.popover("🔎 Ver Miniatura / Agrandar Imagen de Fachada", use_container_width=True):
+                        st.image(enlace_foto, caption=f"Fachada registrada para {almacen_a_consultar}", use_container_width=True)
+                        st.markdown(f"[🔗 Enlace Directo Alternativo]({enlace_foto})")
+                else:
+                    st.caption("ℹ️ No se cargó ninguna foto de fachada o el formato de almacenamiento de Drive aún está procesándose.")
         else:
             st.info("ℹ️ Este almacén aún no cuenta con coordenadas ni referencias configuradas en Ajustes.")
     except Exception as e:
-        st.info("Aún no se ha inicializado la pestaña de 'ubicaciones' en el Google Sheet central.")
+        st.info("Aún no se ha inicializado o estructurado datos en la pestaña 'ubicaciones' del archivo maestro.")
 
-    # 📸 CONTROL VISUAL PERSISTENTE (HISTORIAL DE INSPECCIONES)
+    # 📷 REGISTRO VISUAL DIARIO Y GALERÍA COMPLETA DE MINIATURAS
     st.markdown("---")
-    st.markdown("### 📷 Historial de Fotos de Inspección por Sede")
+    st.markdown("### 📷 Galería de Inspecciones Registradas por Sede")
     
-    col_f1, col_f2 = st.columns([1, 2])
+    col_f1, col_f2 = st.columns([1, 1.8])
     with col_f1:
-        st.markdown("#### Subir Nueva Inspección Diaria")
+        st.markdown("#### Subir Nueva Foto")
         almacen_foto = st.selectbox("Sede a registrar foto:", options=almacen_preferencial, key="sb_foto")
         imagen_cargada = st.file_uploader("Captura (.png, .jpg)", type=["png", "jpg", "jpeg"])
         
         if imagen_cargada is not None:
-            st.image(imagen_cargada, caption="Vista Previa", width=250)
+            st.image(imagen_cargada, caption="Vista Previa Interna", width=200)
             if st.button("Subir e Inmortalizar en Servidor"):
                 enlace_drive = db.guardar_foto_drive(imagen_cargada, almacen_foto, user)
                 if enlace_drive:
-                    st.success(f"Foto enlazada con éxito para {almacen_foto}")
+                    st.success(f"Foto vinculada con éxito para {almacen_foto}")
                     st.rerun()
 
     with col_f2:
-        st.markdown("#### Galería de Inspecciones Registradas")
+        st.markdown("#### Historial Fotográfico (Miniaturas Expandibles)")
         try:
             df_fotos = pd.DataFrame(sh.worksheet("fotos").get_all_records())
             df_fotos_filtradas = df_fotos[df_fotos['Almacen'].isin(filtro_almacen)]
             
             if not df_fotos_filtradas.empty:
-                for _, row in df_fotos_filtradas.iloc[::-1].head(4).iterrows():
-                    st.markdown(f"**Sede:** {row['Almacen']} | **Fecha:** {row['Fecha']} | **Subido por:** {row['Usuario']}")
-                    st.markdown(f"[🔗 Ver Fotografía en Pantalla Completa]({row['Enlace']})")
-                    st.markdown("---")
+                # Mostrar las últimas 6 fotos en un grid limpio de miniaturas de 3 columnas
+                registros = df_fotos_filtradas.iloc[::-1].head(6)
+                
+                # Crear filas dinámicas de 3 columnas para las miniaturas
+                for i in range(0, len(registros), 3):
+                    cols_grid = st.columns(3)
+                    for j, (_, row) in enumerate(registros.iloc[i:i+3].iterrows()):
+                        with cols_grid[j]:
+                            # Miniatura limpia
+                            st.markdown(f"**{row['Almacen']}**")
+                            st.caption(f"📅 {row['Fecha']}")
+                            
+                            # Validar que no sea el link placeholder roto de la plantilla por defecto
+                            if "tu_id_de_carpeta" in str(row['Enlace']):
+                                st.error("⚠️ Enlace no configurado en Base de Datos.")
+                            else:
+                                # Contenedor expandible nativo para agrandar con un solo clic
+                                with st.popover("🔎 Ver Foto", use_container_width=True):
+                                    st.image(row['Enlace'], use_container_width=True, caption=f"Subido por: {row['Usuario']}")
+                                    st.markdown(f"[🔗 Enlace de descarga]({row['Enlace']})")
             else:
                 st.info("No se registran inspecciones visuales para los almacenes seleccionados.")
-        except:
-            st.info("Aún no hay registros en la base de datos de imágenes.")
+        except Exception as e:
+            st.info("Aún no hay registros en la base de datos de imágenes o la pestaña 'fotos' está vacía.")
