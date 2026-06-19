@@ -12,7 +12,6 @@ def extraer_coordenadas_o_url(texto):
     
     # CASO 1: Si es un enlace largo o corto de compartir de Google Maps
     if "maps.google" in texto_str or "goo.gl/maps" in texto_str or texto_str.startswith("http"):
-        # Si ya contiene el formato embebido correcto, lo dejamos pasar
         if "/embed" in texto_str:
             return texto_str
         
@@ -23,7 +22,6 @@ def extraer_coordenadas_o_url(texto):
             lat, lon = match.group(1), match.group(2)
             return f"https://maps.google.com/maps?q={lat},{lon}&z=15&output=embed"
             
-        # Si es un enlace limpio sin coordenadas explícitas, forzamos el parámetro de salida embebida
         if "q=" not in texto_str:
             return f"https://maps.google.com/maps?q={texto_str}&z=15&output=embed"
         
@@ -104,17 +102,24 @@ def render(sh):
             info_sede = df_ub_sede.iloc[-1]
             col_mapa, col_datos = st.columns([1.4, 1])
             
+            # Extraer coordenadas limpias para el botón de navegación GPS externa
+            raw_ubicacion = str(info_sede['Ubicacion']).strip()
+            
             with col_mapa:
-                url_mapa = extraer_coordenadas_o_url(info_sede['Ubicacion'])
+                url_mapa = extraer_coordenadas_o_url(raw_ubicacion)
                 if url_mapa:
-                    # Implementación limpia usando la URL nativa de mapas interactivos oficiales de Google
                     st.components.v1.iframe(url_mapa, height=320, scrolling=True)
                 else:
-                    st.warning("⚠️ Formato de localización vacío o no compatible en la base de datos.")
+                    st.warning("⚠️ Formato de localización vacío o no compatible.")
             
             with col_datos:
                 st.markdown("**📝 Datos Técnicos de Entrada**")
                 st.info(f"**Referencias:**\n\n{info_sede['Referencias']}")
+                
+                # 🌐 BOTÓN DE NAVEGACIÓN GPS EN DIRECTO PARA EL SUPERVISOR
+                if "," in raw_ubicacion or raw_ubicacion.startswith("http"):
+                    link_navegacion = raw_ubicacion if raw_ubicacion.startswith("http") else f"https://www.google.com/maps/search/?api=1&query={raw_ubicacion}"
+                    st.link_button("🚗 Iniciar Navegación GPS (Google Maps)", link_navegacion, use_container_width=True, type="primary")
                 
                 enlace_foto = info_sede['Enlace_Foto']
                 if enlace_foto and str(enlace_foto).startswith("data:image"):
@@ -158,11 +163,14 @@ def render(sh):
                     for k, (_, row) in enumerate(registros.iloc[i:i+3].iterrows()):
                         with cols_grid[k]:
                             st.caption(f"**{row['Almacen']}**\n\n📅 {row['Fecha']}")
-                            if str(row['Enlace']).startswith("data:image"):
+                            # Forzamos la visualización limpia si contiene los binarios Base64
+                            link_imagen = str(row['Enlace']).strip()
+                            if link_imagen.startswith("data:image"):
                                 with st.popover("🔎 Ver Foto", use_container_width=True):
-                                    st.image(row['Enlace'], use_container_width=True, caption=f"Por: {row['Usuario']}")
+                                    st.image(link_imagen, use_container_width=True, caption=f"Por: {row['Usuario']}")
                             else:
-                                st.error("Filtro no soportado.")
+                                st.caption("🔗 _Link antiguo registrado_")
+                                st.markdown(f"[Ver en Drive]({link_imagen})")
             else:
                 st.info("Sin registros fotográficos recientes para estas sedes.")
         except Exception:
