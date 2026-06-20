@@ -2,83 +2,99 @@ import streamlit as st
 import database as db
 from modulos import home, dashboard, reporte_stock, movimientos, ajustes, auditoria
 
-# Configuración inicial de la página (¡Debe ser la primera línea!)
+# Configuración inicial de la página
 st.set_page_config(
     page_title="Consorcio San Miguel - Gestión de Almacenes",
     layout="wide",
-    initial_sidebar_state="collapsed" # Mantiene la barra lateral cerrada por defecto
+    initial_sidebar_state="collapsed"
 )
 
 # =======================================================================
-# 🎨 ESTILOS PERSONALIZADOS - PALETA SEDAPAL (Azul Corporativo y Blanco)
+# 🎨 NUEVO TEMA CLARO CORPORATIVO (PALETA BLANCO Y CELESTE SEDAPAL)
 # =======================================================================
 st.markdown("""
     <style>
-        /* Ocultar decoración por defecto de Streamlit arriba */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
         
-        /* Contenedor principal del encabezado */
+        /* 1. Fondo general de la aplicación en Blanco Puro */
+        .stApp {
+            background-color: #FFFFFF !important;
+            color: #1E293B !important;
+        }
+        
+        /* 2. Forzar que los textos globales sean legibles en fondo claro */
+        h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
+            color: #1E293B !important;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        
+        /* 3. Contenedor del Título Principal */
         .header-container {
-            background-color: #005492;
-            padding: 20px;
-            border-radius: 10px;
+            background: linear-gradient(135deg, #005492 0%, #0076A8 100%);
+            padding: 25px;
+            border-radius: 12px;
             margin-bottom: 25px;
             text-align: center;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0px 4px 15px rgba(0, 84, 146, 0.15);
         }
         .header-title {
-            color: white !important;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #FFFFFF !important;
             font-weight: 700;
             margin: 0;
-            padding: 0;
-            font-size: 28px;
-            letter-spacing: 0.5px;
+            font-size: 30px;
+            letter-spacing: 0.8px;
         }
         .header-subtitle {
-            color: #E3F2FD !important;
+            color: #E0F2FE !important;
             font-size: 14px;
-            margin-top: 5px;
-            opacity: 0.9;
+            margin-top: 6px;
+            font-weight: 500;
         }
         
-        /* Estilización de los botones de navegación superiores */
+        /* 4. Cajas informativas y alertas en tono celeste suave */
+        div[data-testid="stInfoHoverColumns"], .stAlert, div[data-testid="stNotification"] {
+            background-color: #F0F6FA !important;
+            border-left: 5px solid #0076A8 !important;
+            color: #1E293B !important;
+        }
+        
+        /* 5. Estilización de los Botones Superiores de Navegación */
         div.stButton > button {
-            background-color: #ffffff !important;
+            background-color: #F8FAFC !important;
             color: #005492 !important;
-            border: 2px solid #005492 !important;
-            border-radius: 8px !important;
+            border: 2px solid #E2E8F0 !important;
+            border-radius: 10px !important;
             padding: 12px 20px !important;
-            font-size: 16px !important;
-            font-weight: bold !important;
+            font-size: 15px !important;
+            font-weight: 700 !important;
             width: 100% !important;
-            min-height: 55px !important;
-            box-shadow: 0px 2px 5px rgba(0,0,0,0.05) !important;
-            transition: all 0.3s ease-in-out !important;
+            min-height: 58px !important;
+            box-shadow: 0px 2px 4px rgba(0,0,0,0.02) !important;
+            transition: all 0.25s ease-in-out !important;
         }
         
-        /* Efecto al pasar el mouse por encima (Hover) */
+        /* Hover de los botones superiores */
         div.stButton > button:hover {
             background-color: #0076A8 !important;
-            color: white !important;
+            color: #FFFFFF !important;
             border-color: #0076A8 !important;
-            box-shadow: 0px 5px 15px rgba(0, 118, 168, 0.3) !important;
+            box-shadow: 0px 6px 12px rgba(0, 118, 168, 0.25) !important;
             transform: translateY(-2px);
         }
         
-        /* Estilo para el botón del módulo actualmente SELECCIONADO */
-        div.stButton > button:focus, div.stButton > button[aria-selected="true"] {
-            background-color: #005492 !important;
-            color: white !important;
-            border-color: #002D54 !important;
+        /* Campos de texto y selectores */
+        .stTextInput input, .stSelectbox div {
+            background-color: #F8FAFC !important;
+            color: #1E293B !important;
+            border: 1px solid #CBD5E1 !important;
         }
     </style>
 """, unsafe_allow_html=True)
 
 # =======================================================================
-# 🏢 ENCABEZADO PRINCIPAL DE LA APLICACIÓN
+# 🏢 ENCABEZADO PRINCIPAL
 # =======================================================================
 st.markdown("""
     <div class="header-container">
@@ -87,14 +103,12 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Inicializar la variable de estado del menú si no existe
 if "menu_actual" not in st.session_state:
     st.session_state.menu_actual = "Inicio"
 
 # =======================================================================
-# 🧭 BARRA DE NAVEGACIÓN HORIZONTAL EN EL ENCABEZADO
+# 🧭 NAVEGACIÓN HORIZONTAL
 # =======================================================================
-# Creamos 6 columnas exactas para distribuir los botones simétricamente de forma horizontal
 cols_nav = st.columns(6)
 
 with cols_nav[0]:
@@ -127,10 +141,10 @@ with cols_nav[5]:
         st.session_state.menu_actual = "Ajustes del Sistema"
         st.rerun()
 
-st.markdown("---") # Línea divisoria elegante bajo la botonera
+st.markdown("<hr style='margin-top:5px; margin-bottom:20px; border-color:#E2E8F0;'>", unsafe_allow_html=True)
 
 # =======================================================================
-# 🔌 ENRUTADOR DINÁMICO DE PÁGINAS
+# 🔌 ENRUTADOR DINÁMICO
 # =======================================================================
 sh = db.conectar_sheets()
 
