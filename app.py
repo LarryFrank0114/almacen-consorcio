@@ -190,8 +190,7 @@ elif st.session_state.menu_actual == "Panel de Control":
 elif st.session_state.menu_actual == "Stock Consolidados":
     reporte_stock.render(sh)
 elif st.session_state.menu_actual == "Movimientos (Kardex)":
-    try: movimientos.render(sh)
-    except NameError: movements.render(sh)
+    movimientos.render(sh)
 elif st.session_state.menu_actual == "Auditoría de Terreno":
     auditoria.render(sh)  
 elif st.session_state.menu_actual == "Ajustes del Sistema":
