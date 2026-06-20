@@ -190,8 +190,8 @@ st.markdown("<hr style='margin-top:5px; margin-bottom:15px; border-color:#2D2D2D
 sh = db.conectar_sheets()
 
 if st.session_state.menu_actual == "Inicio":
-    try: home.render()
-    except TypeError: home.render(sh)
+    try: home.render(sh)
+    except TypeError: home.render()
 elif st.session_state.menu_actual == "Panel de Control":
     dashboard.render(sh)
 elif st.session_state.menu_actual == "Stock Consolidados":
