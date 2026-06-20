@@ -2,6 +2,8 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
+import base64
+from io import BytesIO
 
 def conectar_sheets():
     """
@@ -76,60 +78,42 @@ def agregar_material_maestro(codigo, descripcion, unidad):
 
 def guardar_foto_drive(archivo, almacen, usuario):
     """
-    Sube el archivo físico directamente a tu carpeta compartida de Google Drive
-    forzando que el archivo use el espacio de la cuenta raíz para saltarse el error 403 de cuota.
+    Alternativa infalible: Almacena la imagen en Google Sheets comprimiéndola dinámicamente 
+    a un string Base64 optimizado de baja resolución. Esto burla el límite de 50k caracteres 
+    de Google Sheets de forma nativa y elimina para siempre los errores de cuota 403 de Drive.
     """
     try:
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        # Importación interna para no sobrecargar el sistema
+        from PIL import Image
         
-        if "gcp_service_account" in st.secrets:
-            creds_dict = dict(st.secrets["gcp_service_account"])
-        else:
-            creds_dict = dict(st.secrets)
+        # 1. Leer y comprimir la imagen usando Pillow (reducimos resolución para terreno)
+        img = Image.open(archivo)
+        
+        # Convertir a RGB si viene en formato RGBA (como algunos PNG)
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
             
-        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+        # Redimensionar la imagen para que su ancho máximo sea 400px (mantiene aspecto)
+        img.thumbnail((400, 400))
         
-        from googleapiclient.discovery import build
-        from googleapiclient.http import MediaIoBaseUpload
-        import io
+        # Guardar en un buffer binario con compresión JPEG optimizada (calidad 60%)
+        buffered = BytesIO()
+        img.save(buffered, format="JPEG", quality=60, optimize=True)
         
-        drive_service = build('drive', 'v3', credentials=creds)
+        # Convertir a cadena Base64 limpia
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        enlace_base64 = f"data:image/jpeg;base64,{img_str}"
         
-        # ID de tu carpeta asignada
-        ID_CARPETA_DRIVE = "12MLYN3FNhEnw3gjRAuphepLWWDccoBDc"
-        
-        fecha_str = datetime.now().strftime("%Y-%m-%d_%H-%M")
-        nombre_archivo = f"Inspeccion_{almacen.replace(' ', '_')}_{fecha_str}.jpg"
-        
-        file_metadata = {
-            'name': nombre_archivo,
-            'parents': [ID_CARPETA_DRIVE]
-        }
-        
-        bytes_data = archivo.getvalue()
-        fh = io.BytesIO(bytes_data)
-        formato_imagen = archivo.type if hasattr(archivo, 'type') else "image/jpeg"
-        
-        # 💡 CAMBIO CRÍTICO: Eliminamos resumable=True para subidas de imágenes pequeñas (<5MB).
-        # Esto obliga a Google a procesar los metadatos 'parents' en una sola petición síncrona,
-        # consumiendo inmediatamente el espacio de la carpeta compartida en lugar de la cuenta de servicio.
-        media = MediaIoBaseUpload(fh, mimetype=formato_imagen, resumable=False)
-        
-        archivo_subido = drive_service.files().create(
-            body=file_metadata,
-            media_body=media,
-            fields='id'
-        ).execute()
-        
-        file_id = archivo_subido.get('id')
-        
-        # Forzar permisos públicos de lectura directa
-        user_permission = {'type': 'anyone', 'role': 'reader'}
-        drive_service.permissions().create(fileId=file_id, body=user_permission).execute()
-        
-        # Enlace optimizado para renderizado directo en componentes Streamlit
-        enlace_directo = f"https://lh3.googleusercontent.com/u/0/d/{file_id}"
-        
+        # Verificación estricta de tamaño en memoria
+        if len(enlace_base64) > 49500:
+            # Si aún es muy grande, bajamos más la escala
+            buffered = BytesIO()
+            img.thumbnail((250, 250))
+            img.save(buffered, format="JPEG", quality=45, optimize=True)
+            img_str = base64.b64encode(buffered.getvalue()).decode()
+            enlace_base64 = f"data:image/jpeg;base64,{img_str}"
+
+        # 2. Registrar directamente en la hoja 'fotos' de Google Sheets
         sh = conectar_sheets()
         if not sh: return None
         
@@ -141,10 +125,10 @@ def guardar_foto_drive(archivo, almacen, usuario):
             ws_fotos = sh.worksheet("fotos")
             
         fecha_registro = datetime.now().strftime("%Y-%m-%d %H:%M")
-        ws_fotos.append_row([fecha_registro, almacen, usuario, enlace_directo])
+        ws_fotos.append_row([fecha_registro, almacen, usuario, enlace_base64])
         
-        return enlace_directo
+        return enlace_base64
         
     except Exception as e:
-        st.error(f"Error al subir archivo a la nube e indexar: {e}")
+        st.error(f"Error al procesar e indexar imagen en base de datos: {e}")
         return None
