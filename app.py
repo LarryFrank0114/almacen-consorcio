@@ -1,6 +1,6 @@
 import streamlit as st
 import database as db
-from modulos import home, dashboard, reporte_stock, movements, ajustes, auditoria  # Nota: ajusta si tu módulo de movimientos se llama movimientos o movements
+from modulos import home, dashboard, reporte_stock, movimientos, ajustes, auditoria
 
 # Configuración inicial de la página
 st.set_page_config(
