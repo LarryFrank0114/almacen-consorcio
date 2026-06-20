@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # =======================================================================
-# 🎨 TEMA CLARO CORPORATIVO Y DISEÑO FLEXIBLE RESPONSIVO (PALETA SEDAPAL)
+# 🎨 DISEÑO DARK PREMIUM & RESPONSIVO (INSPIRADO EN image_87f7fc.png)
 # =======================================================================
 st.markdown("""
     <style>
@@ -18,76 +18,97 @@ st.markdown("""
         footer {visibility: hidden;}
         header {visibility: hidden;}
         
-        /* Fondo general de la aplicación */
+        /* Fondo general ultra oscuro */
         .stApp {
-            background-color: #B8EEFF !important;
-            color: #1E293B !important;
+            background-color: #121212 !important;
+            color: #E0E0E0 !important;
         }
         
+        /* Forzar color de textos globales y títulos */
         h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
-            color: #1E293B !important;
+            color: #E0E0E0 !important;
             font-family: 'Segoe UI', Arial, sans-serif;
         }
         
-        /* Banner del Encabezado */
+        /* Títulos destacados en amarillo dorado */
+        h1, h2, h3, .gold-text {
+            color: #FFC107 !important;
+        }
+        
+        /* Banner del Encabezado estilo Tarjeta Neumórfica Oscura */
         .header-container {
-            background: linear-gradient(135deg, #005492 0%, #0076A8 100%);
-            padding: 20px;
-            border-radius: 12px;
+            background-color: #1E1E1E;
+            padding: 22px;
+            border-radius: 16px;
             margin-bottom: 20px;
             text-align: center;
-            box-shadow: 0px 4px 15px rgba(0, 84, 146, 0.15);
+            border: 1px solid #2D2D2D;
+            box-shadow: inset 1px 1px 1px rgba(255,255,255,0.05), 0px 4px 15px rgba(0,0,0,0.5);
         }
         .header-title {
-            color: #FFFFFF !important;
+            color: #FFC107 !important;
             font-weight: 700;
             margin: 0;
             font-size: 26px;
-            letter-spacing: 0.8px;
+            letter-spacing: 1px;
         }
         .header-subtitle {
-            color: #E0F2FE !important;
+            color: #AAAAAA !important;
             font-size: 13px;
             margin-top: 6px;
             font-weight: 500;
         }
 
-        /* 📱 MAGIA RESPONSIVA: Forzar que las columnas de Streamlit se adapten en celulares */
+        /* 📱 Adaptabilidad Móvil del Menú */
         @media (max-width: 768px) {
             div[data-testid="stHorizontalBlock"] {
                 flex-direction: row !important;
                 flex-wrap: wrap !important;
-                gap: 10px !important;
+                gap: 12px !important;
             }
             div[data-testid="column"] {
-                width: calc(50% - 10px) !important; /* En celulares los botones se acomodan de 2 en 2 */
-                flex-min-width: calc(50% - 10px) !important;
-                margin-bottom: 5px !important;
+                width: calc(50% - 6px) !important;
+                flex-min-width: calc(50% - 6px) !important;
+                margin-bottom: 4px !important;
             }
         }
         
-        /* Diseño de los Botones del Menú */
+        /* Botones del Menú - Estilo Cápsula Redondeada */
         div.stButton > button {
-            background-color: #F8FAFC !important;
-            color: #005492 !important;
-            border: 2px solid #E2E8F0 !important;
-            border-radius: 10px !important;
-            padding: 8px 10px !important;
+            background-color: #1E1E1E !important;
+            color: #E0E0E0 !important;
+            border: 1px solid #333333 !important;
+            border-radius: 25px !important; /* Bordes bien redondeados como la imagen */
+            padding: 10px 15px !important;
             font-size: 14px !important;
-            font-weight: 700 !important;
+            font-weight: 600 !important;
             width: 100% !important;
-            min-height: 54px !important;
-            box-shadow: 0px 2px 4px rgba(0,0,0,0.02) !important;
+            min-height: 52px !important;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3) !important;
             transition: all 0.2s ease-in-out !important;
         }
         
-        /* Hover e Interacción */
+        /* Hover: Transición a Amarillo Dorado Brillante con letras oscuras */
         div.stButton > button:hover {
-            background-color: #0076A8 !important;
+            background-color: #FFC107 !important;
+            color: #121212 !important;
+            border-color: #FFC107 !important;
+            box-shadow: 0px 0px 15px rgba(255, 193, 7, 0.4) !important;
+            transform: translateY(-2px);
+        }
+        
+        /* Inputs, Cajas y Selectores adaptados al modo oscuro */
+        .stTextInput input, .stSelectbox div, .stTextArea textarea {
+            background-color: #1E1E1E !important;
             color: #FFFFFF !important;
-            border-color: #0076A8 !important;
-            box-shadow: 0px 4px 10px rgba(0, 118, 168, 0.2) !important;
-            transform: translateY(-1px);
+            border: 1px solid #333333 !important;
+            border-radius: 8px !important;
+        }
+        
+        /* Estilo para los contenedores/tarjetas informativas de los módulos */
+        div[data-testid="stInfoHoverColumns"], .stAlert, div[data-testid="stNotification"], .element-container div.stMarkdown {
+            background-color: #1E1E1E !important;
+            color: #E0E0E0 !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -99,7 +120,7 @@ if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
 if not st.session_state.autenticado:
-    st.markdown("<h2 style='text-align: center; color: #005492; margin-top:50px;'>🔐 Acceso al Sistema Logístico</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #FFC107; margin-top:50px;'>🔐 Acceso al Sistema Logístico</h2>", unsafe_allow_html=True)
     col_l1, col_l2, col_l3 = st.columns([1, 1.5, 1])
     with col_l2:
         user_input = st.text_input("Usuario Corporativo:")
@@ -114,15 +135,19 @@ if not st.session_state.autenticado:
     st.stop()
 
 # =======================================================================
-# 🏢 ENCABEZADO PRINCIPAL (POST-LOGIN)
+# 🏢 ENCABEZADO PRINCIPAL
 # =======================================================================
 user_activo = st.session_state.username
-es_admin_o_super = "Larry" in user_activo or "Supervisor" in user_activo
+
+# ⚙️ SOLUCIÓN PARA QUE VEAS EL BOTÓN DE AJUSTES: 
+# Agrega aquí tu usuario exacto (ej. tu nombre o correo) dentro de la lista de administradores
+LISTA_ADMINS = ["Larry", "Supervisor", "Admin", "admin", "Piero Pezo"] 
+es_admin_o_super = any(admin in user_activo for admin in LISTA_ADMINS)
 
 st.markdown(f"""
     <div class="header-container">
         <h1 class="header-title">🏢 CONSORCIO SAN MIGUEL</h1>
-        <div class="header-subtitle">Usuario: {user_activo} | Panel de Control de Campo</div>
+        <div class="header-subtitle">Usuario: <span style="color:#FFC107;">{user_activo}</span> | Panel de Control de Campo</div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -130,22 +155,19 @@ if "menu_actual" not in st.session_state:
     st.session_state.menu_actual = "Inicio"
 
 # =======================================================================
-# 🧭 BARRA DE NAVEGACIÓN TOTALMENTE RESPONSIVA
+# 🧭 BARRA DE NAVEGACIÓN RESPONSIVA
 # =======================================================================
-# Filtramos las opciones según el rol del usuario logueado
 if es_admin_o_super:
     opciones_menu = ["🏠\nInicio", "📊\nPanel Control", "📦\nStock Consolidados", "🔄\nMovimientos", "📋\nAuditoría Terreno", "⚙️\nAjustes"]
 else:
     opciones_menu = ["🏠\nInicio", "📊\nPanel Control", "📦\nStock Consolidados", "📋\nAuditoría Terreno"]
 
-# El contenedor de columnas ahora es fluido gracias a las reglas CSS inyectadas arriba
 cols_nav = st.columns(len(opciones_menu))
 
 for idx, opcion in enumerate(opciones_menu):
     with cols_nav[idx]:
         nombre_tecnico_menu = opcion.split("\n")[1] if "\n" in opcion else opcion
         
-        # Generar botón inteligente
         if st.button(opcion, use_container_width=True, key=f"btn_{nombre_tecnico_menu}"):
             if "Stock" in nombre_tecnico_menu:
                 st.session_state.menu_actual = "Stock Consolidados"
@@ -159,7 +181,7 @@ for idx, opcion in enumerate(opciones_menu):
                 st.session_state.menu_actual = nombre_tecnico_menu
             st.rerun()
 
-st.markdown("<hr style='margin-top:5px; margin-bottom:15px; border-color:#E2E8F0;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin-top:5px; margin-bottom:15px; border-color:#2D2D2D;'>", unsafe_allow_html=True)
 
 # =======================================================================
 # 🔌 ENRUTADOR DINÁMICO DE PÁGINAS
@@ -178,9 +200,9 @@ elif st.session_state.menu_actual == "Movimientos (Kardex)":
 elif st.session_state.menu_actual == "Auditoría de Terreno":
     auditoria.render(sh)  
 elif st.session_state.menu_actual == "Ajustes del Sistema":
-    ajustes.render(sh) # <- Tu pestaña de Ajustes asignada perfectamente
+    ajustes.render(sh)
 
-# Botón de salida móvil en la parte inferior para no entorpecer la cabecera
+# Botón de cierre de sesión integrado al estilo oscuro en la parte baja
 st.markdown("---")
 if st.button("🚪 Cerrar Sesión del Sistema", type="secondary"):
     st.session_state.autenticado = False
