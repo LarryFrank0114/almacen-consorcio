@@ -3,46 +3,74 @@ import pandas as pd
 from datetime import datetime
 
 def render(sh):
-    st.markdown("## Bienvenid@ al Panel de Control Logístico")
-    st.markdown("Consorcio San Miguel — Gestión de Materiales e Infraestructura Externa.")
-    st.markdown("---")
+    st.markdown("<h2 style='color: #E5A93C;'>📢 Comunicados y Novedades Operativas</h2>", unsafe_allow_html=True)
     
-    # Intentar cargar la pestaña de anuncios desde Sheets de forma persistente
     try:
         ws_anuncios = sh.worksheet("anuncios")
-        df_anuncios = pd.DataFrame(ws_anuncios.get_all_records())
-    except:
-        df_anuncios = pd.DataFrame(columns=["Fecha", "Autor", "Titulo", "Contenido"])
+        datos = ws_anuncios.get_all_records()
+        df_anuncios = pd.DataFrame(datos)
+    except Exception as e:
+        st.error(f"Error al cargar anuncios: {e}")
+        return
 
-    # REGISTRO EXCLUSIVO PARA LARRY RODRIGUEZ
-    if "Larry" in st.session_state.username:
-        with st.expander("📢 Panel de Comandancia: Publicar Nuevo Anuncio / Noticia"):
-            with st.form("form_anuncio", clear_on_submit=True):
-                titulo = st.text_input("Título del Comunicado:")
-                contenido = st.text_area("Cuerpo del Mensaje / Instrucciones Técnicas:")
-                if st.form_submit_button("Lanzar Anuncio a toda la Red"):
-                    if titulo and contenido:
-                        nueva_fila = [datetime.now().strftime("%Y-%m-%d %H:%M"), st.session_state.username, titulo, contenido]
-                        try:
-                            sh.worksheet("anuncios").append_row(nueva_fila)
-                            st.success("Anuncio publicado con éxito en la portada de toda la cuadrilla.")
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Error al guardar anuncio: {e}")
-                    else:
-                        st.warning("Por favor completa los campos antes de enviar.")
+    user_activo = st.session_state.get("username", "Invitado").lower().strip()
+    es_admin = user_activo in ["larry", "supervisor", "admin"]
 
-    # Renderizar los anuncios guardados cronológicamente inverso (más nuevo primero)
-    st.markdown("### 📰 Comunicados y Novedades Operativas")
+    # ==========================================
+    # 🛠️ PANEL DE COMANDANCIA (SOLO ADMINS)
+    # ==========================================
+    if es_admin:
+        with st.expander("🛠️ Panel de Control de Anuncios (Publicar / Editar)"):
+            accion = st.radio("Selecciona una acción:", ["Publicar Nuevo", "Modificar Existente"])
+            
+            if accion == "Publicar Nuevo":
+                nuevo_titulo = st.text_input("Título del Anuncio:")
+                nuevo_contenido = st.text_area("Contenido del Mensaje:")
+                
+                if st.button("🚀 Publicar Anuncio", use_container_width=True):
+                    if nuevo_titulo and nuevo_contenido:
+                        fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M")
+                        ws_anuncios.append_row([fecha_actual, user_activo, nuevo_titulo, nuevo_contenido])
+                        st.success("¡Anuncio publicado con éxito!")
+                        st.rerun()
+            
+            elif accion == "Modificar Existente" and not df_anuncios.empty:
+                # Elegir el anuncio por su título
+                opciones_anuncios = df_anuncios['Titulo'].tolist()
+                anuncio_sel = st.selectbox("Selecciona el anuncio a modificar:", opciones_anuncios)
+                
+                # Obtener índice y datos actuales
+                idx = opciones_anuncios.index(anuncio_sel)
+                fila_sheets = idx + 2 # +2 por el encabezado de Sheets
+                
+                edit_titulo = st.text_input("Editar Título:", value=df_anuncios.iloc[idx]['Titulo'])
+                edit_contenido = st.text_area("Editar Contenido:", value=df_anuncios.iloc[idx]['Contenido'])
+                
+                col_btn1, col_btn2 = st.columns(2)
+                with col_btn1:
+                    if st.button("💾 Guardar Cambios", use_container_width=True):
+                        ws_anuncios.update_cell(fila_sheets, 3, edit_titulo) # Columna 3: Titulo
+                        ws_anuncios.update_cell(fila_sheets, 4, edit_contenido) # Columna 4: Contenido
+                        st.success("¡Anuncio actualizado!")
+                        st.rerun()
+                with col_btn2:
+                    if st.button("🗑️ Eliminar Anuncio", use_container_width=True, type="primary"):
+                        ws_anuncios.delete_rows(fila_sheets)
+                        st.warning("Anuncio eliminado.")
+                        st.rerun()
+
+    # ==========================================
+    # 👀 VISTA DE LOS ANUNCIOS (CON ALTO CONTRASTE)
+    # ==========================================
     if not df_anuncios.empty:
-        df_anuncios = df_anuncios.iloc[::-1]  # Invertir orden
-        for _, row in df_anuncios.head(5).iterrows():
+        # Mostrar los anuncios del más reciente al más antiguo
+        for _, row in df_anuncios.iloc[::-1].iterrows():
             st.markdown(f"""
-            <div style="background-color: #f8f9fa; padding: 15px; border-left: 5px solid #F57C00; border-radius: 6px; margin-bottom: 15px;">
-                <h4 style="margin: 0; color: #0B2545;">{row['Titulo']}</h4>
-                <p style="margin: 5px 0; font-size: 12px; color: #666;">⏳ {row['Fecha']} — Publicado por: <b>{row['Autor']}</b></p>
-                <p style="margin: 10px 0 0 0; font-size: 14px; color: #333;">{row['Contenido']}</p>
-            </div>
+                <div style="background-color: #1E1E1E; padding: 20px; border-radius: 12px; border-left: 5px solid #E5A93C; margin-bottom: 15px; border: 1px solid #333333;">
+                    <h3 style="margin: 0 0 5px 0; color: #E5A93C !important;">{row['Titulo']}</h3>
+                    <p style="margin: 0 0 15px 0; color: #A5A5A5; font-size: 12px;">⏳ {row['Fecha']} — Publicado por: <span style="color:#E5A93C;">{row['Usuario']}</span></p>
+                    <p style="color: #FFFFFF !important; font-size: 15px; line-height: 1.5;">{row['Contenido']}</p>
+                </div>
             """, unsafe_allow_html=True)
     else:
-        st.info("No hay anuncios vigentes o alertas globales publicadas en este momento.")
+        st.info("No hay comunicados activos en este momento.")
