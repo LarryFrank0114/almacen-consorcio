@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # =======================================================================
-# 🎨 DISEÑO ULTRA PREMIUM DE ALTO CONTRASTE (CORREGIDO)
+# 🎨 INYECCIÓN DE TEMA OSCURO PREMIUM DE ALTO CONTRASTE (FORZADO)
 # =======================================================================
 st.markdown("""
     <style>
@@ -18,27 +18,27 @@ st.markdown("""
         footer {visibility: hidden;}
         header {visibility: hidden;}
         
-        /* 1. Fondo de la App: Gris Asfalto oscuro para que contrasten las tarjetas */
+        /* Fondo de la aplicación - Gris Oscuro Asfalto */
         .stApp {
             background-color: #141619 !important;
             color: #FFFFFF !important;
         }
         
-        /* 2. Forzar lectura perfecta de textos */
+        /* Lectura de textos globales */
         p, label, span, .stMarkdown {
-            color: #E2E8F0 !important; /* Blanco grisáceo muy claro */
+            color: #E2E8F0 !important;
             font-family: 'Segoe UI', Arial, sans-serif;
             font-size: 15px;
         }
         
-        /* Títulos en Amarillo Mostaza de alta visibilidad */
+        /* Títulos en Amarillo Mostaza Vibrante */
         h1, h2, h3, h4, .mostaza-text {
             color: #E5A93C !important;
             font-weight: 700 !important;
             font-family: 'Segoe UI', Arial, sans-serif;
         }
         
-        /* 3. Banner Superior */
+        /* Banner del Encabezado Principal */
         .header-container {
             background-color: #1F2327;
             padding: 22px;
@@ -62,7 +62,7 @@ st.markdown("""
             font-weight: 500;
         }
         
-        /* 📱 Adaptabilidad Móvil del Menú (Cuadrícula de 2 columnas en celulares) */
+        /* Adaptabilidad Móvil en Cuadrícula */
         @media (max-width: 768px) {
             div[data-testid="stHorizontalBlock"] {
                 flex-direction: row !important;
@@ -76,7 +76,7 @@ st.markdown("""
             }
         }
         
-        /* 4. Botones tipo Cápsula con Contraste de Selección */
+        /* Botones del Menú - Estilo Cápsula Redondeada */
         div.stButton > button {
             background-color: #1F2327 !important;
             color: #FFFFFF !important;
@@ -90,7 +90,7 @@ st.markdown("""
             transition: all 0.2s ease-in-out !important;
         }
         
-        /* Efecto de Selección Activa e Iluminación */
+        /* Hover e Iluminación de Selección */
         div.stButton > button:hover, div.stButton > button:focus {
             background-color: #E5A93C !important;
             color: #141619 !important;
@@ -99,14 +99,14 @@ st.markdown("""
             transform: translateY(-2px);
         }
         
-        /* 5. Inputs y Tablas de Datos (Contraste Asegurado) */
+        /* Cajas de Entrada e Inputs */
         .stTextInput input, .stSelectbox div, .stTextArea textarea {
             background-color: #1F2327 !important;
             color: #FFFFFF !important;
             border: 1px solid #495057 !important;
         }
         
-        /* Corrección para DataTables y bloques informativos de Streamlit */
+        /* DataFrames y Tablas de Datos */
         div[data-testid="stTable"], div[data-testid="stDataFrame"], .styled-table {
             background-color: #1F2327 !important;
             border-radius: 8px;
@@ -116,7 +116,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =======================================================================
-# 🔐 CONTROL DE ACCESO (LOGIN SEGURO)
+# 🔐 GESTIÓN DE ACCESO GENERAL
 # =======================================================================
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
@@ -137,11 +137,11 @@ if not st.session_state.autenticado:
     st.stop()
 
 # =======================================================================
-# 🏢 ENCABEZADO PRINCIPAL (POST-LOGIN)
+# 🏢 ENCABEZADO POST-LOGIN
 # =======================================================================
 user_activo = st.session_state.username
 
-# ⚙️ VALIDACIÓN DE ROLES IMPERMEABLE (Insensible a mayúsculas/minúsculas)
+# Roles sin conflictos de mayúsculas
 LISTA_ADMINS = ["larry", "supervisor", "admin", "piero pezo"] 
 es_admin_o_super = user_activo.lower().strip() in LISTA_ADMINS
 
@@ -156,7 +156,7 @@ if "menu_actual" not in st.session_state:
     st.session_state.menu_actual = "Inicio"
 
 # =======================================================================
-# 🧭 BARRA DE NAVEGACIÓN RESPONSIVA CON ÍCONOS INTEGRADOS
+# 🧭 NAVEGACIÓN POR BOTONES CON ÍCONOS
 # =======================================================================
 if es_admin_o_super:
     opciones_menu = ["🏠\nInicio", "📊\nPanel Control", "📦\nStock Consolidados", "🔄\nMovimientos", "📋\nAuditoría Terreno", "⚙️\nAjustes"]
@@ -185,25 +185,28 @@ for idx, opcion in enumerate(opciones_menu):
 st.markdown("<hr style='margin-top:5px; margin-bottom:15px; border-color:#2D2D2D;'>", unsafe_allow_html=True)
 
 # =======================================================================
-# 🔌 ENRUTADOR DINÁMICO DE PÁGINAS
+# 🔌 ENRUTADOR SEGURO DE MÓDULOS (PREVIENE CAÍDAS DE SESIÓN)
 # =======================================================================
 sh = db.conectar_sheets()
 
-if st.session_state.menu_actual == "Inicio":
-    try: home.render(sh)
-    except TypeError: home.render()
-elif st.session_state.menu_actual == "Panel de Control":
-    dashboard.render(sh)
-elif st.session_state.menu_actual == "Stock Consolidados":
-    reporte_stock.render(sh)
-elif st.session_state.menu_actual == "Movimientos (Kardex)":
-    movimientos.render(sh)
-elif st.session_state.menu_actual == "Auditoría de Terreno":
-    auditoria.render(sh)  
-elif st.session_state.menu_actual == "Ajustes del Sistema":
-    ajustes.render(sh)
+if st.session_state.autenticado:
+    if st.session_state.menu_actual == "Inicio":
+        try: home.render(sh)
+        except TypeError: home.render()
+    elif st.session_state.menu_actual == "Panel de Control":
+        dashboard.render(sh)
+    elif st.session_state.menu_actual == "Stock Consolidados":
+        reporte_stock.render(sh)
+    elif st.session_state.menu_actual == "Movimientos (Kardex)":
+        movimientos.render(sh)
+    elif st.session_state.menu_actual == "Auditoría de Terreno":
+        auditoria.render(sh)  
+    elif st.session_state.menu_actual == "Ajustes del Sistema":
+        ajustes.render(sh)
+else:
+    st.warning("🔒 Sesión inactiva. Regrese al Login.")
 
-# Botón de salida móvil integrado al pie
+# Botón de cierre de sesión
 st.markdown("---")
 if st.button("🚪 Cerrar Sesión del Sistema", type="secondary", use_container_width=True):
     st.session_state.autenticado = False
