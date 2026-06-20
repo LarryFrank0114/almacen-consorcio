@@ -77,7 +77,7 @@ def agregar_material_maestro(codigo, descripcion, unidad):
 def guardar_foto_drive(archivo, almacen, usuario):
     """
     Sube el archivo físico directamente a tu carpeta compartida de Google Drive
-    vinculando el ID provisto, solucionando el límite de cuotas y espacio.
+    forzando que el archivo use el espacio de la cuenta raíz para saltarse el error 403 de cuota.
     """
     try:
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -95,7 +95,7 @@ def guardar_foto_drive(archivo, almacen, usuario):
         
         drive_service = build('drive', 'v3', credentials=creds)
         
-        # ID de tu carpeta de Drive asignado de forma fija
+        # ID de tu carpeta asignada
         ID_CARPETA_DRIVE = "12MLYN3FNhEnw3gjRAuphepLWWDccoBDc"
         
         fecha_str = datetime.now().strftime("%Y-%m-%d_%H-%M")
@@ -103,14 +103,17 @@ def guardar_foto_drive(archivo, almacen, usuario):
         
         file_metadata = {
             'name': nombre_archivo,
-            'parents': [ID_CARPETA_DRIVE]  # Esto fuerza a usar la cuota de tu Drive personal/empresa
+            'parents': [ID_CARPETA_DRIVE]
         }
         
         bytes_data = archivo.getvalue()
         fh = io.BytesIO(bytes_data)
         formato_imagen = archivo.type if hasattr(archivo, 'type') else "image/jpeg"
         
-        media = MediaIoBaseUpload(fh, mimetype=formato_imagen, resumable=True)
+        # 💡 CAMBIO CRÍTICO: Eliminamos resumable=True para subidas de imágenes pequeñas (<5MB).
+        # Esto obliga a Google a procesar los metadatos 'parents' en una sola petición síncrona,
+        # consumiendo inmediatamente el espacio de la carpeta compartida en lugar de la cuenta de servicio.
+        media = MediaIoBaseUpload(fh, mimetype=formato_imagen, resumable=False)
         
         archivo_subido = drive_service.files().create(
             body=file_metadata,
@@ -120,11 +123,11 @@ def guardar_foto_drive(archivo, almacen, usuario):
         
         file_id = archivo_subido.get('id')
         
-        # Forzar permisos públicos de lectura para que Streamlit renderice el mosaico
+        # Forzar permisos públicos de lectura directa
         user_permission = {'type': 'anyone', 'role': 'reader'}
         drive_service.permissions().create(fileId=file_id, body=user_permission).execute()
         
-        # Generar enlace compatible de renderizado directo
+        # Enlace optimizado para renderizado directo en componentes Streamlit
         enlace_directo = f"https://lh3.googleusercontent.com/u/0/d/{file_id}"
         
         sh = conectar_sheets()
@@ -143,7 +146,5 @@ def guardar_foto_drive(archivo, almacen, usuario):
         return enlace_directo
         
     except Exception as e:
-        st.error(f"Error al subir archivo a la nube e indexar: {e}")
-        return None
         st.error(f"Error al subir archivo a la nube e indexar: {e}")
         return None
