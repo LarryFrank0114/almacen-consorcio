@@ -132,3 +132,50 @@ def guardar_foto_drive(archivo, almacen, usuario):
     except Exception as e:
         st.error(f"Error al procesar e indexar imagen en base de datos: {e}")
         return None
+# =======================================================================
+# AÑADE ESTA FUNCIÓN AL FINAL DE TU ARCHIVO DATABASE.PYEXISTENTE
+# =======================================================================
+
+def registrar_auditoria_terreno(sh, fecha, hora, usuario, almacen, material, teorico, fisico, discrepancia, foto, observaciones):
+    """
+    Comprime la evidencia fotográfica de la auditoría a un formato Base64 ligero y 
+    la registra de forma estructurada en la pestaña 'auditorias' de Google Sheets.
+    """
+    try:
+        from PIL import Image
+        from io import BytesIO
+        import base64
+
+        # 1. Compresión y Optimización de la Imagen del Conteo
+        img = Image.open(foto)
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        img.thumbnail((380, 380)) # Tamaño ideal balanceado
+        
+        buffered = BytesIO()
+        img.save(buffered, format="JPEG", quality=55, optimize=True)
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        enlace_foto_base64 = f"data:image/jpeg;base64,{img_str}"
+
+        # 2. Conectar y verificar la existencia de la pestaña 'auditorias'
+        lista_hojas = [h.title for h in sh.worksheets()]
+        if "auditorias" not in lista_hojas:
+            # Crear la pestaña con las cabeceras estándar si es la primera vez
+            ws_aud = sh.add_worksheet(title="auditorias", rows="2000", cols="10")
+            ws_aud.append_row([
+                "Fecha", "Hora", "Usuario", "Almacen", "Material", 
+                "Stock_Teorico", "Cantidad_Fisica", "Discrepancia", "Foto_Evidencia", "Observaciones"
+            ])
+        else:
+            ws_aud = sh.worksheet("auditorias")
+
+        # 3. Escribir los datos calculados en Google Sheets
+        ws_aud.append_row([
+            str(fecha), str(hora), str(usuario), str(almacen), str(material),
+            int(teorico), int(fisico), int(discrepancia), str(enlace_foto_base64), str(observaciones)
+        ])
+
+        return True, "✔️ Informe de auditoría cargado e indexado de manera exitosa en el sistema central."
+        
+    except Exception as e:
+        return False, f"Fallo crítico al guardar el reporte de auditoría: {e}"
