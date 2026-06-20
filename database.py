@@ -8,10 +8,8 @@ def conectar_sheets():
     Establece la conexión centralizada con Google Sheets utilizando las credenciales de GCP.
     """
     try:
-        # Configuración de los permisos de lectura y escritura en Google Drive y Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         
-        # Lee las credenciales del bloque estructurado [gcp_service_account] en tus Secrets
         if "gcp_service_account" in st.secrets:
             creds_dict = dict(st.secrets["gcp_service_account"])
         else:
@@ -97,7 +95,7 @@ def guardar_foto_drive(archivo, almacen, usuario):
         
         drive_service = build('drive', 'v3', credentials=creds)
         
-        # ID de tu carpeta asignado e indexado de forma fija
+        # ID de tu carpeta de Drive asignado de forma fija
         ID_CARPETA_DRIVE = "12MLYN3FNhEnw3gjRAuphepLWWDccoBDc"
         
         fecha_str = datetime.now().strftime("%Y-%m-%d_%H-%M")
@@ -105,7 +103,7 @@ def guardar_foto_drive(archivo, almacen, usuario):
         
         file_metadata = {
             'name': nombre_archivo,
-            'parents': [ID_CARPETA_DRIVE]
+            'parents': [ID_CARPETA_DRIVE]  # Esto fuerza a usar la cuota de tu Drive personal/empresa
         }
         
         bytes_data = archivo.getvalue()
@@ -122,11 +120,11 @@ def guardar_foto_drive(archivo, almacen, usuario):
         
         file_id = archivo_subido.get('id')
         
-        # Forzar permisos públicos de lectura directa
+        # Forzar permisos públicos de lectura para que Streamlit renderice el mosaico
         user_permission = {'type': 'anyone', 'role': 'reader'}
         drive_service.permissions().create(fileId=file_id, body=user_permission).execute()
         
-        # Enlace optimizado para renderizado directo en componentes Streamlit
+        # Generar enlace compatible de renderizado directo
         enlace_directo = f"https://lh3.googleusercontent.com/u/0/d/{file_id}"
         
         sh = conectar_sheets()
@@ -145,5 +143,7 @@ def guardar_foto_drive(archivo, almacen, usuario):
         return enlace_directo
         
     except Exception as e:
+        st.error(f"Error al subir archivo a la nube e indexar: {e}")
+        return None
         st.error(f"Error al subir archivo a la nube e indexar: {e}")
         return None
