@@ -10,12 +10,10 @@ def extraer_coordenadas_o_url(texto):
     """
     texto_str = str(texto).strip()
     
-    # CASO 1: Si es un enlace largo o corto de compartir de Google Maps
     if "maps.google" in texto_str or "goo.gl/maps" in texto_str or texto_str.startswith("http"):
         if "/embed" in texto_str:
             return texto_str
         
-        # Intentamos extraer latitud y longitud incrustados en la misma URL de Google Maps (ej: @-12.0431,-77.0254)
         patron_url = r'@([-+]?\d*\.\d+),([-+]?\d*\.\d+)'
         match = re.search(patron_url, texto_str)
         if match:
@@ -27,11 +25,10 @@ def extraer_coordenadas_o_url(texto):
         
         return texto_str + "&output=embed"
     
-    # CASO 2: Si el usuario ingresó coordenadas puras separadas por coma (ej: -12.0463, -77.0427)
     patron_coor = r'[-+]?\d*\.\d+|\d+'
-    coordenadas = re.findall(patron_coor, texto_str)
-    if len(coordenadas) >= 2:
-        lat, lon = coordenadas[0], coordenadas[1]
+    coordinates = re.findall(patron_coor, texto_str)
+    if len(coordinates) >= 2:
+        lat, lon = coordinates[0], coordinates[1]
         return f"https://maps.google.com/maps?q={lat},{lon}&z=15&output=embed"
         
     return None
@@ -49,7 +46,6 @@ def render(sh):
 
     user = st.session_state.username
     
-    # Determinar almacén preferencial por personal
     if "Piero Pezo" in user:
         almacen_preferencial = ["Almacén 10"]
     elif "Marcial Huayta" in user:
