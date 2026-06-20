@@ -1,6 +1,6 @@
 import streamlit as st
 import database as db
-from modulos import home, dashboard, reporte_stock, movimientos, ajustes, auditoria
+from modulos import home, dashboard, reporte_stock, movements, ajustes, auditoria  # Nota: ajusta si tu módulo de movimientos se llama movimientos o movements
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # =======================================================================
-# 🎨 DISEÑO DARK PREMIUM & RESPONSIVO (INSPIRADO EN image_87f7fc.png)
+# 🎨 DISEÑO ULTRA PREMIUM (FONDO OSCURO, TEXTOS MOSTAZA Y SELECCIÓN BRILLANTE)
 # =======================================================================
 st.markdown("""
     <style>
@@ -24,15 +24,16 @@ st.markdown("""
             color: #E0E0E0 !important;
         }
         
-        /* Forzar color de textos globales y títulos */
-        h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
+        /* Forzar color de textos globales y etiquetas */
+        h4, h5, h6, p, label, span, .stMarkdown {
             color: #E0E0E0 !important;
             font-family: 'Segoe UI', Arial, sans-serif;
         }
         
-        /* Títulos destacados en amarillo dorado */
-        h1, h2, h3, .gold-text {
-            color: #FFC107 !important;
+        /* 🌟 Títulos principales y destacados en Amarillo Mostaza */
+        h1, h2, h3, .mostaza-text {
+            color: #E5A93C !important;  /* Amarillo Mostaza Premium */
+            font-weight: 700 !important;
         }
         
         /* Banner del Encabezado estilo Tarjeta Neumórfica Oscura */
@@ -46,14 +47,14 @@ st.markdown("""
             box-shadow: inset 1px 1px 1px rgba(255,255,255,0.05), 0px 4px 15px rgba(0,0,0,0.5);
         }
         .header-title {
-            color: #FFC107 !important;
+            color: #E5A93C !important;
             font-weight: 700;
             margin: 0;
             font-size: 26px;
             letter-spacing: 1px;
         }
         .header-subtitle {
-            color: #AAAAAA !important;
+            color: #A5A5A5 !important;
             font-size: 13px;
             margin-top: 6px;
             font-weight: 500;
@@ -76,39 +77,33 @@ st.markdown("""
         /* Botones del Menú - Estilo Cápsula Redondeada */
         div.stButton > button {
             background-color: #1E1E1E !important;
-            color: #E0E0E0 !important;
-            border: 1px solid #333333 !important;
-            border-radius: 25px !important; /* Bordes bien redondeados como la imagen */
+            color: #D5D5D5 !important;
+            border: 1px solid #3A3A3A !important;
+            border-radius: 25px !important;
             padding: 10px 15px !important;
             font-size: 14px !important;
             font-weight: 600 !important;
             width: 100% !important;
             min-height: 52px !important;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3) !important;
+            box-shadow: 2px 2px 6px rgba(0,0,0,0.4) !important;
             transition: all 0.2s ease-in-out !important;
         }
         
-        /* Hover: Transición a Amarillo Dorado Brillante con letras oscuras */
-        div.stButton > button:hover {
-            background-color: #FFC107 !important;
+        /* ✨ EFECTO EN HOVER / SELECCIÓN: Color Mostaza Brillante Eléctrico */
+        div.stButton > button:hover, div.stButton > button:focus {
+            background-color: #E5A93C !important;
             color: #121212 !important;
-            border-color: #FFC107 !important;
-            box-shadow: 0px 0px 15px rgba(255, 193, 7, 0.4) !important;
+            border-color: #FFC86B !important;
+            box-shadow: 0px 0px 18px rgba(229, 169, 60, 0.6) !important;
             transform: translateY(-2px);
         }
         
-        /* Inputs, Cajas y Selectores adaptados al modo oscuro */
+        /* Inputs, Cajas de texto y Selectores adaptados al modo oscuro */
         .stTextInput input, .stSelectbox div, .stTextArea textarea {
             background-color: #1E1E1E !important;
             color: #FFFFFF !important;
-            border: 1px solid #333333 !important;
+            border: 1px solid #3A3A3A !important;
             border-radius: 8px !important;
-        }
-        
-        /* Estilo para los contenedores/tarjetas informativas de los módulos */
-        div[data-testid="stInfoHoverColumns"], .stAlert, div[data-testid="stNotification"], .element-container div.stMarkdown {
-            background-color: #1E1E1E !important;
-            color: #E0E0E0 !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -120,7 +115,7 @@ if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
 if not st.session_state.autenticado:
-    st.markdown("<h2 style='text-align: center; color: #FFC107; margin-top:50px;'>🔐 Acceso al Sistema Logístico</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #E5A93C; margin-top:50px;'>🔐 Acceso al Sistema Logístico</h2>", unsafe_allow_html=True)
     col_l1, col_l2, col_l3 = st.columns([1, 1.5, 1])
     with col_l2:
         user_input = st.text_input("Usuario Corporativo:")
@@ -135,19 +130,18 @@ if not st.session_state.autenticado:
     st.stop()
 
 # =======================================================================
-# 🏢 ENCABEZADO PRINCIPAL
+# 🏢 ENCABEZADO PRINCIPAL (POST-LOGIN)
 # =======================================================================
 user_activo = st.session_state.username
 
-# ⚙️ SOLUCIÓN PARA QUE VEAS EL BOTÓN DE AJUSTES: 
-# Agrega aquí tu usuario exacto (ej. tu nombre o correo) dentro de la lista de administradores
-LISTA_ADMINS = ["Larry", "Supervisor", "Admin", "admin", "Piero Pezo"] 
-es_admin_o_super = any(admin in user_activo for admin in LISTA_ADMINS)
+# ⚙️ SOLUCIÓN DEFINITIVA DE ROLES (Insensible a mayúsculas/minúsculas):
+LISTA_ADMINS = ["larry", "supervisor", "admin", "piero pezo"] 
+es_admin_o_super = user_activo.lower().strip() in LISTA_ADMINS
 
 st.markdown(f"""
     <div class="header-container">
         <h1 class="header-title">🏢 CONSORCIO SAN MIGUEL</h1>
-        <div class="header-subtitle">Usuario: <span style="color:#FFC107;">{user_activo}</span> | Panel de Control de Campo</div>
+        <div class="header-subtitle">Usuario: <span style="color:#E5A93C; font-weight:bold;">{user_activo}</span> | Panel de Control de Campo</div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -155,7 +149,7 @@ if "menu_actual" not in st.session_state:
     st.session_state.menu_actual = "Inicio"
 
 # =======================================================================
-# 🧭 BARRA DE NAVEGACIÓN RESPONSIVA
+# 🧭 BARRA DE NAVEGACIÓN RESPONSIVA (AMARILLO MOSTAZA EN ACCIÓN)
 # =======================================================================
 if es_admin_o_super:
     opciones_menu = ["🏠\nInicio", "📊\nPanel Control", "📦\nStock Consolidados", "🔄\nMovimientos", "📋\nAuditoría Terreno", "⚙️\nAjustes"]
@@ -196,13 +190,14 @@ elif st.session_state.menu_actual == "Panel de Control":
 elif st.session_state.menu_actual == "Stock Consolidados":
     reporte_stock.render(sh)
 elif st.session_state.menu_actual == "Movimientos (Kardex)":
-    movimientos.render(sh)
+    try: movimientos.render(sh)
+    except NameError: movements.render(sh)
 elif st.session_state.menu_actual == "Auditoría de Terreno":
     auditoria.render(sh)  
 elif st.session_state.menu_actual == "Ajustes del Sistema":
     ajustes.render(sh)
 
-# Botón de cierre de sesión integrado al estilo oscuro en la parte baja
+# Botón de cierre de sesión integrado en la sección inferior
 st.markdown("---")
 if st.button("🚪 Cerrar Sesión del Sistema", type="secondary"):
     st.session_state.autenticado = False
