@@ -14,11 +14,14 @@ with st.sidebar:
     )
     st.markdown("---")
 
-# Enrutador de pantallas (Añadir el caso de la auditoría)
+# Enrutador de pantallas corregido
 sh = db.conectar_sheets()
 
 if menu == "Inicio":
-    home.render()
+    try:
+        home.render() # Si te sigue dando error aquí, cámbialo por: home.render(sh)
+    except TypeError:
+        home.render(sh)
 elif menu == "Panel de Control":
     dashboard.render(sh)
 elif menu == "Stock Consolidados":
@@ -26,6 +29,6 @@ elif menu == "Stock Consolidados":
 elif menu == "Movimientos (Kardex)":
     movimientos.render(sh)
 elif menu == "Auditoría de Terreno":
-    auditoria.render(sh)  # <- Aquí mandamos a llamar el nuevo módulo operativo
+    auditoria.render(sh)  
 elif menu == "Ajustes del Sistema":
     ajustes.render(sh)
