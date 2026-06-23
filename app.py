@@ -18,7 +18,7 @@ if "mario_world" not in st.session_state:
 
 # Diccionario de fondos de pantalla disponibles
 FONDOS_MUNDO = {
-    "Cielo Azul (Mundo 1-1)": "https://drive.google.com/file/d/1M7AyD7ORtNBSb6kznn_S6MOE2ohj7YSp/view?usp=sharing",
+    "Cielo Azul (Mundo 1-1)": "https://github.com/LarryFrank0114/almacen-consorcio/blob/4f327124ee4f8f4dbc82b61878968f467fd5faf7/imagenes/fondo-retro-mario2.jpg",
     "Subterráneo (Mundo 1-2)": "https://i.imgur.com/KscY9b9.png", 
     "Castillo de Bowser": "https://i.imgur.com/mS26f8U.png"
 }
