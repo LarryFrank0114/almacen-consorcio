@@ -18,9 +18,9 @@ if "mario_world" not in st.session_state:
 
 # Diccionario de fondos de pantalla disponibles
 FONDOS_MUNDO = {
-    "Cielo Azul (Mundo 1-1)": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-retro-mario2.jpg?raw=true",
-    "Subterráneo (Mundo 1-2)": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo.jpg?raw=true", 
-    "Castillo de Bowser": "https://i.imgur.com/mS26f8U.png"
+    "Fondo clasico": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-retro-mario2.jpg?raw=true",
+    "Fondo Verde": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo.jpg?raw=true", 
+    "Fondo 3D": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo-3d.jpg?raw=true"
 }
 
 url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, FONDOS_MUNDO["Cielo Azul (Mundo 1-1)"])
