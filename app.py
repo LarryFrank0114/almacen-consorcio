@@ -26,8 +26,7 @@ FONDOS_MUNDO = {
     "Fondo 3D": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo-3d.jpg?raw=true"
     }
 
-url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, "")
-
+url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, "Fondo clasico")
 # Convertimos el porcentaje del slider a decimal para el CSS (ej: 50% -> 0.50)
 alfa_css = st.session_state.filtro_oscuro / 100.0
 
