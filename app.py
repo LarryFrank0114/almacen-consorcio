@@ -93,9 +93,9 @@ if "filtro_oscuro" not in st.session_state:
 
 # Enlaces de imágenes de tu repositorio GitHub[cite: 1]
 FONDOS_MUNDO = {
-    "Fondo clasico": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-retro-mario2.jpg?raw=true",
-    "Fondo Verde": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo.jpg?raw=true",
-    "Fondo 3D": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo-3d.jpg?raw=true"
+    "Fondo clasico": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-retro-mario2.jpg?raw=true",[cite: 1]
+    "Fondo Verde": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo.jpg?raw=true",[cite: 1]
+    "Fondo 3D": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo-3d.jpg?raw=true"[cite: 1]
 }
 
 url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, "")
@@ -173,7 +173,7 @@ st.markdown(f"""
             transform: translateY(-4px);
         }}
         
-        /* CORRECCIÓN DE CAJAS SELECTBOX (Evita que el texto de image_c5a071.png se corte) */
+        /* 🛠️ REAJUSTE DE SELECTBOX (Evita los recortes de image_c5a071.png) */
         .stSelectbox div[data-baseweb="select"] {{
             background-color: rgba(31, 35, 39, 0.9) !important;
             border: 3px solid #FBD000 !important;
@@ -217,7 +217,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # =======================================================================
-# 🔐 PANTALLA DE ACCESO
+# 🔐 PANTALLA DE ACCESO (LOGIN)
 # =======================================================================
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
@@ -247,7 +247,7 @@ if not st.session_state.autenticado:
     st.stop()
 
 # =======================================================================
-# 🏢 ENCABEZADO PRINCIPAL (AHORA LIMPIO Y CENTRADO)
+# 🏢 ENCABEZADO PRINCIPAL (DISEÑO LIMPIO)
 # =======================================================================
 user_activo = st.session_state.username
 LISTA_ADMINS = ["larry", "supervisor", "admin", "piero pezo"] 
@@ -266,7 +266,7 @@ if "menu_actual" not in st.session_state:
     st.session_state.menu_actual = "Inicio"
 
 # =======================================================================
-# 🧭 NAVEGACIÓN DINÁMICA TRADUCIDA (BLOQUES DE LADRILLO)
+# 🧭 NAVEGACIÓN DINÁMICA TRADUCIDA (TODOS CON HONGOS 🍄)
 # =======================================================================
 if es_admin_o_super:
     opciones_menu = [t["btn_inicio"], t["btn_panel"], t["btn_stock"], t["btn_kardex"], t["btn_audit"], t["btn_setup"]]
@@ -290,60 +290,67 @@ for idx, opcion in enumerate(opciones_menu):
 st.markdown("<hr style='margin-top:5px; margin-bottom:20px; border-color:#43B047; border-width:3px;'>", unsafe_allow_html=True)
 
 # =======================================================================
-# 🔌 ENRUTADOR DE SECCIONES + PANEL DE CONFIGURACIÓN COMPLETO EN SETUP
+# 🔌 ENRUTADOR DE SECCIONES CON CONTROL DE ACCESO Y ROLES
 # =======================================================================
 sh = db.conectar_sheets()
 
 if st.session_state.autenticado:
-    if st.session_state.menu_actual == "Ajustes del Sistema":
-        ajustes.render(sh)
-        
-        st.markdown("<br>---", unsafe_allow_html=True)
-        st.markdown(t["titulo_graficos"])
-        
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            nuevo_fondo = st.selectbox(
-                t["select_mundo"],
-                list(FONDOS_MUNDO.keys()),
-                key="mario_world_selector"
-            )
-            if nuevo_fondo != st.session_state.mario_world:
-                st.session_state.mario_world = nuevo_fondo
-                st.rerun()
-                
-        with c2:
-            nueva_oscuridad = st.slider(
-                t["nivel_sombra"],
-                min_value=10, 
-                max_value=90, 
-                value=st.session_state.filtro_oscuro,
-                step=5,
-                help=t["help_sombra"]
-            )
-            if nueva_oscuridad != st.session_state.filtro_oscuro:
-                st.session_state.filtro_oscuro = nueva_oscuridad
-                st.rerun()
+    es_admin_creador = user_activo.lower().strip() == "larry"
+    es_auditor_o_supervisor = user_activo.lower().strip() in ["supervisor", "admin", "piero pezo"]
 
-        with c3:
-            # UBICACIÓN AJUSTADA: El selector de idioma ahora está integrado limpiamente aquí
-            lang_global = st.selectbox(
-                "🌐 IDIOMA / 语言 / LANGUAGE:", 
-                list(TRADUCCIONES.keys()), 
-                key="lang_selector_global",
-                index=list(TRADUCCIONES.keys()).index(st.session_state.lang)
-            )
-            if lang_global != st.session_state.lang:
-                st.session_state.lang = lang_global
-                st.rerun()
+    if st.session_state.menu_actual == "Ajustes del Sistema":
+        # REGLA: Solo tú (Larry) modificas la estructura principal
+        if es_admin_creador:
+            ajustes.render(sh)
+            
+            st.markdown("<br>---", unsafe_allow_html=True)
+            st.markdown(t["titulo_graficos"])
+            
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                nuevo_fondo = st.selectbox(t["select_mundo"], list(FONDOS_MUNDO.keys()), key="mario_world_selector")
+                if nuevo_fondo != st.session_state.mario_world:
+                    st.session_state.mario_world = nuevo_fondo
+                    st.rerun()
+                    
+            with c2:
+                nueva_oscuridad = st.slider(t["nivel_sombra"], min_value=10, max_value=90, value=st.session_state.filtro_oscuro, step=5, help=t["help_sombra"])
+                if nueva_oscuridad != st.session_state.filtro_oscuro:
+                    st.session_state.filtro_oscuro = nueva_oscuridad
+                    st.rerun()
+
+            with c3:
+                lang_global = st.selectbox("🌐 IDIOMA / 语言 / LANGUAGE:", list(TRADUCCIONES.keys()), key="lang_selector_global", index=list(TRADUCCIONES.keys()).index(st.session_state.lang))
+                if lang_global != st.session_state.lang:
+                    st.session_state.lang = lang_global
+                    st.rerun()
+        else:
+            st.error("🚫 ACCESO DENEGADO. Solo el Administrador Principal (Player 1) puede gestionar los parámetros estructurales.")
             
     elif st.session_state.menu_actual == "Inicio":
         try: home.render(sh)
         except TypeError: home.render()
-    elif st.session_state.menu_actual == "Panel de Control": dashboard.render(sh)
-    elif st.session_state.menu_actual == "Stock Consolidados": reporte_stock.render(sh)
-    elif st.session_state.menu_actual == "Movimientos (Kardex)": movimientos.render(sh)
-    elif st.session_state.menu_actual == "Auditoría de Terreno": auditoria.render(sh)  
+        
+    elif st.session_state.menu_actual == "Panel de Control": 
+        dashboard.render(sh)
+        
+    elif st.session_state.menu_actual == "Stock Consolidados": 
+        reporte_stock.render(sh)
+        
+    elif st.session_state.menu_actual == "Movimientos (Kardex)":
+        # 🛡️ PASO SEGURO DE VARIABLES A KARDEX
+        # Si es supervisor, auditor o admin (distinto a larry), modo_lectura se activará como True
+        modo_lectura_activo = es_auditor_o_supervisor
+        
+        try:
+            movimientos.render(sh, usuario=user_activo, modo_lectura=modo_lectura_activo)
+        except TypeError:
+            # Respaldo por Variable de Estado en caso de que la firma de render() sea asíncrona
+            st.session_state["modo_lectura_kardex"] = modo_lectura_activo
+            movimientos.render(sh, usuario=user_activo)
+                
+    elif st.session_state.menu_actual == "Auditoría de Terreno": 
+        auditoria.render(sh)
 
 # Botón de Salida Traducido
 st.markdown("---")
