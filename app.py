@@ -4,20 +4,20 @@ from modulos import home, dashboard, reporte_stock, movimientos, ajustes, audito
 
 # Configuración inicial de la página
 st.set_page_config(
-    page_title="Almacén Consorcio - Mario Edition",
+    page_title="Consorcio San Miguel - Logistic System",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 # =======================================================================
-# 🌐 SISTEMA DE IDIOMAS MULTILENGUAJE CON ICONO DE HONGO (🍄)
+# 🌐 SISTEMA DE IDIOMAS MULTILENGUAJE CON NOMBRE ACTUALIZADO
 # =======================================================================
 if "lang" not in st.session_state:
     st.session_state.lang = "Español 🇪🇸"
 
 TRADUCCIONES = {
     "Español 🇪🇸": {
-        "titulo_login": "🍄 MARIO CORE - LOGISTICS",
+        "titulo_login": "CONSORCIO SAN MIGUEL<br>LOGISTIC SYSTEM",
         "sub_login": "INGRESE SUS CREDENCIALES PLAYER 1",
         "usuario": "USUARIO:",
         "password": "PASSWORD:",
@@ -37,7 +37,7 @@ TRADUCCIONES = {
         "logout": "🚪 GAME OVER (LOGOUT)"
     },
     "中文 🇨🇳": {
-        "titulo_login": "🍄 马里奥核心 - 物流管理系统",
+        "titulo_login": "CONSORCIO SAN MIGUEL<br>LOGISTIC SYSTEM",
         "sub_login": "请输入玩家 1 的凭证 (PLAYER 1 CREDENTIALS)",
         "usuario": "用户名 (USER):",
         "password": "密码 (PASSWORD):",
@@ -57,7 +57,7 @@ TRADUCCIONES = {
         "logout": "🚪 游戏结束 (注销登录)"
     },
     "English 🇬🇧": {
-        "titulo_login": "🍄 MARIO CORE - LOGISTICS",
+        "titulo_login": "CONSORCIO SAN MIGUEL<br>LOGISTIC SYSTEM",
         "sub_login": "ENTER YOUR CREDENTIALS PLAYER 1",
         "usuario": "USERNAME:",
         "password": "PASSWORD:",
@@ -80,79 +80,102 @@ TRADUCCIONES = {
 
 t = TRADUCCIONES[st.session_state.lang]
 
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
+
 if "mario_world" not in st.session_state:
     st.session_state.mario_world = "Fondo clasico"
 
 if "filtro_oscuro" not in st.session_state:
     st.session_state.filtro_oscuro = 50
 
-# Enlaces de imágenes de tu repositorio GitHub[cite: 1]
+# URL de imágenes de fondo
+FONDO_LOGIN = "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-consorcio.png?raw=true"
 FONDOS_MUNDO = {
     "Fondo clasico": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-retro-mario2.jpg?raw=true",
     "Fondo Verde": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo.jpg?raw=true",
     "Fondo 3D": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo-3d.jpg?raw=true"
 }
 
-url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, "")
-alfa_css = st.session_state.filtro_oscuro / 100.0
+# Selección dinámica de fondo (Fondo corporativo en Login, mundo Mario adentro)
+url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, "") if st.session_state.autenticado else FONDO_LOGIN
+alfa_css = st.session_state.filtro_oscuro / 100.0 if st.session_state.autenticado else 0.40
 
-# Styles de Super Mario con mejoras en selectores
+# Inyección CSS con estilos específicos para centrar y robustecer componentes
 st.markdown(f"""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         #MainMenu {{visibility: hidden;}} footer {{visibility: hidden;}} header {{visibility: hidden;}}
         .stApp {{
-            background-color: #5c94fc; 
-            background-image: linear-gradient(rgba(16, 18, 22, {alfa_css}), rgba(16, 18, 22, {alfa_css + 0.1 if alfa_css <= 0.9 else 1.0})), url('{url_fondo_actual}');
-            background-size: cover; background-attachment: fixed; background-position: center bottom; color: #FFFFFF !important;
+            background-color: #101216; 
+            background-image: linear-gradient(rgba(16, 18, 22, {alfa_css}), rgba(16, 18, 22, {alfa_css})), url('{url_fondo_actual}');
+            background-size: cover; background-attachment: fixed; background-position: center center; color: #FFFFFF !important;
         }}
-        p, label, span, .stMarkdown {{ font-family: 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }}
-        h1, h2, h3, h4, .retro-text {{ font-family: 'Press Start 2P', cursive !important; line-height: 1.5; }}
-        h1 {{ color: #E52521 !important; font-size: 22px !important; text-shadow: 3px 3px #000; text-align: center; }}
-        h2 {{ color: #FBD000 !important; font-size: 18px !important; text-shadow: 2px 2px #000; }}
-        h3 {{ color: #43B047 !important; font-size: 15px !important; text-shadow: 2px 2px #000; }}
-        .header-container {{ background-color: rgba(31, 35, 39, 0.9); padding: 24px; border-radius: 12px; margin-bottom: 25px; text-align: center; border: 6px solid #43B047; box-shadow: inset 0 0 20px #1e5220, 0px 5px 15px rgba(0,0,0,0.6); }}
+        p, label, span, .stMarkdown {{ font-family: 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: 600; text-shadow: 2px 2px 4px rgba(0,0,0,0.9); }}
+        h1, h2, h3, h4, .retro-text {{ font-family: 'Press Start 2P', cursive !important; line-height: 1.6; text-align: center !important; }}
+        h1 {{ color: #E52521 !important; font-size: 24px !important; text-shadow: 4px 4px #000000 !important; margin-bottom: 10px; }}
+        h4 {{ color: #FBD000 !important; font-size: 11px !important; text-shadow: 2px 2px #000000 !important; }}
+        
+        /* Botón Start Alargado y Centrado */
         div.stButton > button {{
-            background-color: #B2430A !important; color: #FFFFFF !important; font-family: 'Press Start 2P', cursive !important; font-size: 10px !important;
-            border-radius: 4px !important; border: 4px solid #FCD116 !important; box-shadow: 3px 3px 0px #000000, inset 4px 4px 0px rgba(255,255,255,0.3) !important;
-            padding: 12px 5px !important; width: 100% !important; min-height: 58px !important; transition: transform 0.1s ease-in-out !important;
+            background-color: #B2430A !important; color: #FFFFFF !important; font-family: 'Press Start 2P', cursive !important; font-size: 13px !important;
+            border-radius: 6px !important; border: 4px solid #FCD116 !important; box-shadow: 4px 4px 0px #000000, inset 4px 4px 0px rgba(255,255,255,0.3) !important;
+            padding: 14px 20px !important; width: 100% !important; min-height: 55px !important; transition: all 0.1s ease-in-out !important;
         }}
-        div.stButton > button:hover {{ background-color: #FBD000 !important; color: #000000 !important; border-color: #FFFFFF !important; transform: translateY(-4px); }}
-        .stSelectbox div[data-baseweb="select"] {{ background-color: rgba(31, 35, 39, 0.9) !important; border: 3px solid #FBD000 !important; border-radius: 6px !important; }}
+        div.stButton > button:hover {{ background-color: #FBD000 !important; color: #000000 !important; border-color: #FFFFFF !important; transform: scale(1.02); }}
+        
+        /* Estilos de inputs */
+        .stSelectbox div[data-baseweb="select"] {{ background-color: rgba(20, 24, 30, 0.95) !important; border: 3px solid #FBD000 !important; border-radius: 6px !important; }}
         .stSelectbox div[data-baseweb="select"] * {{ color: #FBD000 !important; font-family: monospace !important; font-weight: bold !important; }}
-        .stTextInput input, .stTextArea textarea {{ background-color: rgba(31, 35, 39, 0.9) !important; color: #FBD000 !important; border: 3px solid #FBD000 !important; }}
-        div[data-testid="stTable"], div[data-testid="stDataFrame"] {{ background-color: rgba(31, 35, 39, 0.9) !important; border: 3px solid #43B047 !important; border-radius: 8px; }}
+        .stTextInput input, .stTextArea textarea {{ background-color: rgba(20, 24, 30, 0.95) !important; color: #FBD000 !important; border: 3px solid #FBD000 !important; font-size: 16px !important; }}
+        
+        .header-container {{ background-color: rgba(31, 35, 39, 0.95); padding: 24px; border-radius: 12px; margin-bottom: 25px; text-align: center; border: 6px solid #43B047; box-shadow: inset 0 0 20px #1e5220, 0px 5px 15px rgba(0,0,0,0.6); }}
+        .fb-container {{ text-align: center; margin-top: 30px; padding: 10px; background-color: rgba(20, 24, 30, 0.8); border-radius: 8px; border: 2px solid #3b5998; }}
+        .fb-link {{ color: #4267B2 !important; font-family: 'Press Start 2P', cursive; font-size: 9px; text-decoration: none; text-shadow: 1px 1px #000; }}
+        .fb-link:hover {{ color: #FBD000 !important; text-decoration: underline; }}
     </style>
 """, unsafe_allow_html=True)
 
 # =======================================================================
-# 🔐 PANTALLA DE ACCESO (LOGIN)
+# 🔐 PANTALLA DE ACCESO (LOGIN REDISEÑADO)
 # =======================================================================
-if "autenticado" not in st.session_state:
-    st.session_state.autenticado = False
-
 if not st.session_state.autenticado:
-    col_lang1, col_lang2 = st.columns([2.5, 1])
+    # Selector de idioma en la parte superior derecha
+    col_lang1, col_lang2 = st.columns([3, 1])
     with col_lang2:
         lang_login = st.selectbox("🌐 LANGUAGE / 语言:", list(TRADUCCIONES.keys()), key="lang_selector_login")
         if lang_login != st.session_state.lang:
             st.session_state.lang = lang_login
             st.rerun()
 
-    st.markdown(f"<br><h1>{t['titulo_login']}</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h4 style='text-align: center; color: #FBD000; font-size:12px;' class='retro-text'>{t['sub_login']}</h4>", unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown(f"<h1>{t['titulo_login']}</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h4 class='retro-text'>{t['sub_login']}</h4><br>", unsafe_allow_html=True)
     
-    col_l1, col_l2, col_l3 = st.columns([1, 1.4, 1])
+    # Contenedor centralizado para Inputs y Botón Alargado
+    col_l1, col_l2, col_l3 = st.columns([1.1, 1.2, 1.1])
     with col_l2:
         user_input = st.text_input(t["usuario"])
         pass_input = st.text_input(t["password"], type="password")
-        if st.button("START"):
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Botón START centrado y extendido en su columna
+        if st.button("START", use_container_width=True):
             if user_input.strip() != "" and pass_input != "": 
                 st.session_state.autenticado = True
                 st.session_state.username = user_input.strip()
                 st.rerun()
             else:
                 st.error(t["error_login"])
+                
+        # Acceso oficial a redes de Consorcio San Miguel
+        st.markdown(f"""
+            <div class="fb-container">
+                <a class="fb-link" href="https://www.facebook.com/consorciosanmiguelperu" target="_blank">
+                    🔷 FACEBOOK OFFICIAL PAGE
+                </a>
+            </div>
+        """, unsafe_allow_html=True)
     st.stop()
 
 # =======================================================================
@@ -160,7 +183,6 @@ if not st.session_state.autenticado:
 # =======================================================================
 user_raw = st.session_state.username.lower()
 
-# Jerarquía Estricta de Cargos y Títulos de Visualización
 if user_raw == "larry":
     display_name = "Larry Rodriguez"
     display_cargo = "Jefe de Almacenes Externos"
@@ -170,9 +192,8 @@ elif user_raw in ["supervisor", "gerencia china", "gerencia", "auditor"]:
     display_name = st.session_state.username.upper()
     display_cargo = "Supervisor / Control de Auditoría G-China"
     es_admin_total = False
-    es_modo_lectura = True  # Bloqueado en Modo Lectura total
+    es_modo_lectura = True
 else:
-    # Responsables de Almacén autorizados
     mapeo_responsables = {
         "piero pezo": "Piero Pezo (Responsable Almacén 10)",
         "gregorio rodriguez": "Gregorio Rodriguez (Responsable Almacén 01)",
@@ -184,10 +205,9 @@ else:
     es_admin_total = False
     es_modo_lectura = False
 
-# Encabezado Principal de Información Estilizado
 st.markdown(f"""
     <div class="header-container">
-        <h1>MARIO LOGISTICS SYSTEM</h1>
+        <h1 style="font-size: 20px !important;">CONSORCIO SAN MIGUEL</h1>
         <div style="color:#FBD000; font-family:'Press Start 2P'; font-size:9px; margin-top:8px; line-height: 1.8;">
             {t['player']}: <span style="color:#FFF;">{display_name}</span><br>
             CARGO: <span style="color:#43B047;">{display_cargo}</span>
@@ -199,9 +219,8 @@ if "menu_actual" not in st.session_state:
     st.session_state.menu_actual = "Inicio"
 
 # =======================================================================
-# 🧭 NAVEGACIÓN DINÁMICA TRADUCIDA
+# 🧭 NAVEGACIÓN DINÁMICA
 # =======================================================================
-# Todos los usuarios ven el Kardex, pero su rol interno condiciona qué hacen dentro
 if es_admin_total:
     opciones_menu = [t["btn_inicio"], t["btn_panel"], t["btn_stock"], t["btn_kardex"], t["btn_audit"], t["btn_setup"]]
 else:
@@ -224,7 +243,7 @@ for idx, opcion in enumerate(opciones_menu):
 st.markdown("<hr style='margin-top:5px; margin-bottom:20px; border-color:#43B047; border-width:3px;'>", unsafe_allow_html=True)
 
 # =======================================================================
-# 🔌 ENRUTADOR DE SECCIONES CON CONTROL DE ACCESO
+# 🔌 ENRUTADOR DE SECCIONES
 # =======================================================================
 sh = db.conectar_sheets()
 
@@ -251,7 +270,7 @@ if st.session_state.autenticado:
                     st.session_state.lang = lang_global
                     st.rerun()
         else:
-            st.error("🚫 ACCESO DENEGADO. Solo el Jefe de Almacenes Externos (Larry Rodriguez) puede modificar la configuración estructural.")
+            st.error("🚫 ACCESO DENEGADO.")
             
     elif st.session_state.menu_actual == "Inicio":
         try: home.render(sh)
@@ -264,13 +283,11 @@ if st.session_state.autenticado:
         reporte_stock.render(sh)
         
     elif st.session_state.menu_actual == "Movimientos (Kardex)":
-        # Ejecución del módulo Kardex pasando las banderas precisas de identidad y rol de lectura
         movimientos.render(sh, usuario=st.session_state.username, modo_lectura=es_modo_lectura)
                 
     elif st.session_state.menu_actual == "Auditoría de Terreno": 
         auditoria.render(sh)
 
-# Botón de Salida Traducido
 st.markdown("---")
 if st.button(t["logout"], use_container_width=True):
     st.session_state.autenticado = False
