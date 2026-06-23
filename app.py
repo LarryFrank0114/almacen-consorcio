@@ -17,7 +17,7 @@ if "lang" not in st.session_state:
 
 TRADUCCIONES = {
     "Español 🇪🇸": {
-        "titulo_login": "🍄 MARIO CORE - LOGISTICS",
+        "titulo_login": "🍄 CONSORCIO SAN MIGUEL - LOGISTIC",
         "sub_login": "INGRESE SUS CREDENCIALES PLAYER 1",
         "usuario": "USUARIO:",
         "password": "PASSWORD:",
