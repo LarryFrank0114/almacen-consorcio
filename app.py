@@ -26,7 +26,7 @@ FONDOS_MUNDO = {
     "Fondo 3D": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo-3d.jpg?raw=true"
     }
 
-url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, "Fondo clasico")
+url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, "")
 # Convertimos el porcentaje del slider a decimal para el CSS (ej: 50% -> 0.50)
 alfa_css = st.session_state.filtro_oscuro / 100.0
 
@@ -218,18 +218,18 @@ if st.session_state.autenticado:
         
         c1, c2 = st.columns(2)
         with c1:
+            # CORRECCIÓN: Usamos 'key' nativo para evitar el error de .index()
             nuevo_fondo = st.selectbox(
                 "Selecciona el Escenario (Mundo):",
                 list(FONDOS_MUNDO.keys()),
-                index=list(FONDOS_MUNDO.keys()).index(st.session_state.mario_world)
+                key="mario_world_selector"
             )
             if nuevo_fondo != st.session_state.mario_world:
                 st.session_state.mario_world = nuevo_fondo
                 st.rerun()
                 
         with c2:
-            # Slider para controlar el nivel de oscuridad (Opacidad de la capa negra)
-            # Menor porcentaje = Fondo más brillante y claro
+            # Slider para controlar el nivel de oscuridad
             nueva_oscuridad = st.slider(
                 "Nivel de Sombra del Fondo (%):",
                 min_value=10, 
