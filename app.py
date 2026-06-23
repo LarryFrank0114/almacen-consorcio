@@ -90,7 +90,7 @@ if "filtro_oscuro" not in st.session_state:
     st.session_state.filtro_oscuro = 50
 
 # URL de imágenes de fondo
-FONDO_LOGIN = "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-consorcio.png?raw=true"
+FONDO_LOGIN = "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-consorcio 2.png?raw=true"
 FONDOS_MUNDO = {
     "Fondo clasico": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-retro-mario2.jpg?raw=true",
     "Fondo Verde": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo.jpg?raw=true",
