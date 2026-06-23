@@ -486,3 +486,39 @@ if st.button(t["logout"], use_container_width=True):
     st.session_state.username = None
     st.session_state.menu_actual = "Inicio"
     st.rerun()
+
+                value=st.session_state.filtro_oscuro,
+                step=5,
+                help=t["help_sombra"]
+            )
+            if nueva_oscuridad != st.session_state.filtro_oscuro:
+                st.session_state.filtro_oscuro = nueva_oscuridad
+                st.rerun()
+
+        with c3:
+            # UBICACIÓN AJUSTADA: El selector de idioma ahora está integrado limpiamente aquí
+            lang_global = st.selectbox(
+                "🌐 IDIOMA / 语言 / LANGUAGE:", 
+                list(TRADUCCIONES.keys()), 
+                key="lang_selector_global",
+                index=list(TRADUCCIONES.keys()).index(st.session_state.lang)
+            )
+            if lang_global != st.session_state.lang:
+                st.session_state.lang = lang_global
+                st.rerun()
+            
+    elif st.session_state.menu_actual == "Inicio":
+        try: home.render(sh)
+        except TypeError: home.render()
+    elif st.session_state.menu_actual == "Panel de Control": dashboard.render(sh)
+    elif st.session_state.menu_actual == "Stock Consolidados": reporte_stock.render(sh)
+    elif st.session_state.menu_actual == "Movimientos (Kardex)": movimientos.render(sh)
+    elif st.session_state.menu_actual == "Auditoría de Terreno": auditoria.render(sh)  
+
+# Botón de Salida Traducido
+st.markdown("---")
+if st.button(t["logout"], use_container_width=True):
+    st.session_state.autenticado = False
+    st.session_state.username = None
+    st.session_state.menu_actual = "Inicio"
+    st.rerun()
