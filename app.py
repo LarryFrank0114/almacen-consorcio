@@ -37,7 +37,7 @@ TRADUCCIONES = {
         "logout": "🚪 GAME OVER (LOGOUT)"
     },
     "中文 🇨🇳": {
-        "titulo_login": "🍄 马里奥核心 - 物流管理系统",
+        "titulo_login": "🍄 聖米格爾聯盟 - 物流管理系统",
         "sub_login": "请输入玩家 1 的凭证 (PLAYER 1 CREDENTIALS)",
         "usuario": "用户名 (USER):",
         "password": "密码 (PASSWORD):",
@@ -57,7 +57,7 @@ TRADUCCIONES = {
         "logout": "🚪 游戏结束 (注销登录)"
     },
     "English 🇬🇧": {
-        "titulo_login": "🍄 MARIO CORE - LOGISTICS",
+        "titulo_login": "🍄 CONSORCIO SAN MIGUEL - LOGISTICS",
         "sub_login": "ENTER YOUR CREDENTIALS PLAYER 1",
         "usuario": "USERNAME:",
         "password": "PASSWORD:",
@@ -187,7 +187,8 @@ else:
 # Encabezado Principal de Información Estilizado
 st.markdown(f"""
     <div class="header-container">
-        <h1>MARIO LOGISTICS SYSTEM</h1>
+        <h1>CMEC 2 - CONSORCIO SAN MIGUEL LOGISTICS SYSTEM</h1>
+        <h2>RUC 20607900052</h2>
         <div style="color:#FBD000; font-family:'Press Start 2P'; font-size:9px; margin-top:8px; line-height: 1.8;">
             {t['player']}: <span style="color:#FFF;">{display_name}</span><br>
             CARGO: <span style="color:#43B047;">{display_cargo}</span>
