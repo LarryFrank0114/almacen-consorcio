@@ -14,7 +14,7 @@ st.set_page_config(
 # =======================================================================
 # Inicializamos el fondo predeterminado con la estética de cielo azul (image_b9c085.png)
 if "mario_world" not in st.session_state:
-    st.session_state.mario_world = "Cielo Azul (Mundo 1-1)"
+    st.session_state.mario_world = "Fondo clasico"
 
 # Diccionario de fondos de pantalla disponibles
 FONDOS_MUNDO = {
@@ -23,7 +23,7 @@ FONDOS_MUNDO = {
     "Fondo 3D": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo-3d.jpg?raw=true"
 }
 
-url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, FONDOS_MUNDO["Cielo Azul (Mundo 1-1)"])
+url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, FONDOS_MUNDO["Fondo clasico"])
 
 # =======================================================================
 # 🍄 ESTILOS CSS AVANZADOS INTERFAZ SUPER MARIO
