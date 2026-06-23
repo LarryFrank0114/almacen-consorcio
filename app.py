@@ -10,63 +10,78 @@ st.set_page_config(
 )
 
 # =======================================================================
-# 🍄 INTERFAZ PREMIUM ESTILO SUPER MARIO BROS (ALTO CONTRASTE)
+# 🌐 SISTEMA DE CAMBIO DE MUNDOS (FONDOS DINÁMICOS)
 # =======================================================================
-st.markdown("""
+# Inicializamos el fondo predeterminado con la estética de cielo azul (image_b9c085.png)
+if "mario_world" not in st.session_state:
+    st.session_state.mario_world = "Cielo Azul (Mundo 1-1)"
+
+# Diccionario de fondos de pantalla disponibles
+FONDOS_MUNDO = {
+    "Cielo Azul (Mundo 1-1)": "https://i.imgur.com/83pZpGZ.png", # Clon exacto de image_b9c085.png
+    "Subterráneo (Mundo 1-2)": "https://i.imgur.com/KscY9b9.png", 
+    "Castillo de Bowser": "https://i.imgur.com/mS26f8U.png"
+}
+
+url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, FONDOS_MUNDO["Cielo Azul (Mundo 1-1)"])
+
+# =======================================================================
+# 🍄 ESTILOS CSS AVANZADOS INTERFAZ SUPER MARIO
+# =======================================================================
+st.markdown(f"""
     <style>
-        /* Importar fuente retro pixelada */
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        header {visibility: hidden;}
+        #MainMenu {{visibility: hidden;}}
+        footer {{visibility: hidden;}}
+        header {{visibility: hidden;}}
         
-        /* 1. Fondo de la App: Escena de Mario Bros optimizada para no perder lectura */
-        .stApp {
-            background-image: linear-gradient(rgba(20, 22, 25, 0.85), rgba(20, 22, 25, 0.85)), 
-                              url('https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=1920');
+        /* Fondo dinámico basado en la selección del usuario */
+        .stApp {{
+            background-image: linear-gradient(rgba(16, 18, 22, 0.78), rgba(16, 18, 22, 0.85)), 
+                              url('{url_fondo_actual}');
             background-size: cover;
             background-attachment: fixed;
+            background-position: center bottom;
             color: #FFFFFF !important;
-        }
+        }}
         
-        /* 2. Tipografía General y Textos */
-        p, label, span, .stMarkdown {
+        /* Textos legibles sobre el cielo */
+        p, label, span, .stMarkdown {{
             color: #F4F4F4 !important;
             font-family: 'Segoe UI', Arial, sans-serif;
             font-size: 15px;
-        }
+            font-weight: 500;
+        }}
         
-        /* Títulos Pixelados estilo Arcade (Rojo Mario y Amarillo Moneda) */
-        h1, h2, h3, h4, .retro-text {
+        /* Encabezados pixelados */
+        h1, h2, h3, h4, .retro-text {{
             font-family: 'Press Start 2P', cursive !important;
             line-height: 1.5;
-        }
+        }}
         
-        h1 { color: #E52521 !important; font-size: 22px !important; text-shadow: 3px 3px #000; text-align: center; }
-        h2 { color: #FBD000 !important; font-size: 18px !important; text-shadow: 2px 2px #000; }
-        h3 { color: #43B047 !important; font-size: 15px !important; text-shadow: 2px 2px #000; }
+        h1 {{ color: #E52521 !important; font-size: 22px !important; text-shadow: 3px 3px #000; text-align: center; }}
+        h2 {{ color: #FBD000 !important; font-size: 18px !important; text-shadow: 2px 2px #000; }}
+        h3 {{ color: #43B047 !important; font-size: 15px !important; text-shadow: 2px 2px #000; }}
         
-        /* 3. Contenedor Principal en forma de Tubería Verde de hongo */
-        .header-container {
+        /* Tubería Verde como Contenedor Principal */
+        .header-container {{
             background-color: #1F2327;
             padding: 24px;
             border-radius: 12px;
             margin-bottom: 25px;
             text-align: center;
-            /* Simulación de borde de tubería retro */
             border: 6px solid #43B047;
             box-shadow: inset 0 0 20px #1e5220, 0px 5px 15px rgba(0,0,0,0.6);
-        }
+        }}
         
-        /* 4. BOTONES ESTILO BLOQUE DE LADRILLOS (BRICK BLOCKS) */
-        div.stButton > button {
-            background-color: #B2430A !important; /* Marrón/Naranja Ladrillo */
+        /* Botones estilo Bloque de Ladrillo */
+        div.stButton > button {{
+            background-color: #B2430A !important;
             color: #FFFFFF !important;
             font-family: 'Press Start 2P', cursive !important;
             font-size: 10px !important;
             border-radius: 4px !important;
-            /* Textura de líneas de ladrillo mediante sombras internas */
             border: 4px solid #FCD116 !important;
             box-shadow: 3px 3px 0px #000000, 
                         inset 4px 4px 0px rgba(255,255,255,0.3), 
@@ -74,66 +89,53 @@ st.markdown("""
             padding: 12px 5px !important;
             width: 100% !important;
             min-height: 58px !important;
-            text-align: center !important;
             transition: transform 0.1s ease-in-out !important;
-        }
+        }}
         
-        /* Efecto al golpear el bloque (Hover/Click) -> Se vuelve bloque amarillo con sorpresa */
-        div.stButton > button:hover, div.stButton > button:focus {
-            background-color: #FBD000 !important; /* Amarillo Moneda */
+        /* Hover a Bloque de Ítem Dorado */
+        div.stButton > button:hover, div.stButton > button:focus {{
+            background-color: #FBD000 !important;
             color: #000000 !important;
             border-color: #FFFFFF !important;
             box-shadow: 0px 0px 15px #FBD000 !important;
             transform: translateY(-4px);
-        }
+        }}
         
-        /* 5. Inputs estilo Bloque de Cuestión (?) */
-        .stTextInput input, .stSelectbox div, .stTextArea textarea {
-            background-color: #212529 !important;
+        /* Inputs */
+        .stTextInput input, .stSelectbox div, .stTextArea textarea {{
+            background-color: #1F2327 !important;
             color: #FBD000 !important;
             font-family: monospace;
             border: 3px solid #FBD000 !important;
-            border-radius: 6px !important;
-        }
+        }}
         
-        /* Tablas y Reportes dentro de bloques limpios */
-        div[data-testid="stTable"], div[data-testid="stDataFrame"] {
+        div[data-testid="stTable"], div[data-testid="stDataFrame"] {{
             background-color: #1F2327 !important;
             border: 3px solid #43B047 !important;
             border-radius: 8px;
-            padding: 12px;
-        }
+        }}
         
-        /* Ajuste móvil de cuadrícula */
-        @media (max-width: 768px) {
-            div[data-testid="stHorizontalBlock"] {
+        @media (max-width: 768px) {{
+            div[data-testid="stHorizontalBlock"] {{
                 flex-direction: row !important;
                 flex-wrap: wrap !important;
                 gap: 10px !important;
-            }
-            div[data-testid="column"] {
+            }}
+            div[data-testid="column"] {{
                 width: calc(50% - 5px) !important;
                 flex-min-width: calc(50% - 5px) !important;
                 margin-bottom: 5px !important;
-            }
-        }
+            }}
+        }}
     </style>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="theme-color" content="#141619">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1407/1407123.png">
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('data:text/javascript;base64,Z2xvYmFsVGhpcy5hZGRFdmVudExpc3RlbmVyKCdmeXRjaCcsIGV2ID0+IGV2LnJlc3BvbmRXaXRoKGZldGNoKGV2LnJlcXVlc3QpKSk7')
-            .then(() => console.log('Mario Logística Active'));
-        }
-    </script>
 """, unsafe_allow_html=True)
 
 # =======================================================================
-# 🔐 PANTALLA DE ACCESO (MUNDO 1-1)
+# 🔐 PANTALLA DE ACCESO
 # =======================================================================
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
@@ -152,11 +154,11 @@ if not st.session_state.autenticado:
                 st.session_state.username = user_input
                 st.rerun()
             else:
-                st.error("❌ Credenciales inválidas. Intente otra vez.")
+                st.error("❌ Credenciales incorrectas.")
     st.stop()
 
 # =======================================================================
-# 🏢 TUBERÍA DE ENCABEZADO (POST-LOGIN)
+# 🏢 ENCABEZADO PRINCIPAL (TUBERÍA VERDE)
 # =======================================================================
 user_activo = st.session_state.username
 LISTA_ADMINS = ["larry", "supervisor", "admin", "piero pezo"] 
@@ -166,7 +168,7 @@ st.markdown(f"""
     <div class="header-container">
         <h1>MARIO LOGISTICS SYSTEM</h1>
         <div style="color:#FBD000; font-family:'Press Start 2P'; font-size:10px; margin-top:8px;">
-            PLAYER: <span style="color:#FFF;">{user_activo.upper()}</span> | LEVEL 1-1
+            PLAYER: <span style="color:#FFF;">{user_activo.upper()}</span> | ESCENARIO: <span style="color:#43B047;">{st.session_state.mario_world.upper()}</span>
         </div>
     </div>
 """, unsafe_allow_html=True)
@@ -175,7 +177,7 @@ if "menu_actual" not in st.session_state:
     st.session_state.menu_actual = "Inicio"
 
 # =======================================================================
-# 🧭 SELECCIÓN DE PANELES (BOTONES LADRILLO)
+# 🧭 NAVEGACIÓN (BLOQUES DE LADRILLO)
 # =======================================================================
 if es_admin_o_super:
     opciones_menu = ["🏠\nINICIO", "📊\nPANEL", "📦\nSTOCK", "🔄\nKARDEX", "📋\nAUDIT", "⚙️\nSETUP"]
@@ -199,21 +201,36 @@ for idx, opcion in enumerate(opciones_menu):
 st.markdown("<hr style='margin-top:5px; margin-bottom:20px; border-color:#43B047; border-width:3px;'>", unsafe_allow_html=True)
 
 # =======================================================================
-# 🔌 ENRUTADOR SEGURO DE CONEXIÓN
+# 🔌 ENRUTADOR DE SECCIONES + SELECTOR DE FONDOS EN SETUP
 # =======================================================================
 sh = db.conectar_sheets()
 
 if st.session_state.autenticado:
-    if st.session_state.menu_actual == "Inicio":
+    if st.session_state.menu_actual == "Ajustes del Sistema":
+        # Renderizamos el módulo original de ajustes
+        ajustes.render(sh)
+        
+        # 🎨 INYECTAMOS EL SELECTOR DE FONDOS DIRECTAMENTE ABAJO EN LA PESTAÑA SETUP
+        st.markdown("<br>---", unsafe_allow_html=True)
+        st.markdown("### 🖼️ Selector de Escenarios Logísticos")
+        nuevo_fondo = st.selectbox(
+            "Cambia el fondo del videojuego para toda la app:",
+            list(FONDOS_MUNDO.keys()),
+            index=list(FONDOS_MUNDO.keys()).index(st.session_state.mario_world)
+        )
+        if nuevo_fondo != st.session_state.mario_world:
+            st.session_state.mario_world = nuevo_fondo
+            st.rerun()
+            
+    elif st.session_state.menu_actual == "Inicio":
         try: home.render(sh)
         except TypeError: home.render()
     elif st.session_state.menu_actual == "Panel de Control": dashboard.render(sh)
     elif st.session_state.menu_actual == "Stock Consolidados": reporte_stock.render(sh)
     elif st.session_state.menu_actual == "Movimientos (Kardex)": movimientos.render(sh)
     elif st.session_state.menu_actual == "Auditoría de Terreno": auditoria.render(sh)  
-    elif st.session_state.menu_actual == "Ajustes del Sistema": ajustes.render(sh)
 
-# Botón de Game Over / Salida
+# Botón de Salida
 st.markdown("---")
 if st.button("🚪 GAME OVER (LOGOUT)", use_container_width=True):
     st.session_state.autenticado = False
