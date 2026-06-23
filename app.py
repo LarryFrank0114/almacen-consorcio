@@ -4,20 +4,20 @@ from modulos import home, dashboard, reporte_stock, movimientos, ajustes, audito
 
 # Configuración inicial de la página
 st.set_page_config(
-    page_title="Almacén Consorcio - Mario Edition",
+    page_title="CONSORCIO SAN MIGUEL - LOGISTIC SYSTEM",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 # =======================================================================
-# 🌐 SISTEMA DE IDIOMAS MULTILENGUAJE CON ICONO DE HONGO (🍄)
+# 🌐 SISTEMA DE IDIOMAS MULTILENGUAJE
 # =======================================================================
 if "lang" not in st.session_state:
     st.session_state.lang = "Español 🇪🇸"
 
 TRADUCCIONES = {
     "Español 🇪🇸": {
-        "titulo_login": "🍄 MARIO CORE - LOGISTICS",
+        "titulo_login": "CONSORCIO SAN MIGUEL<br>- LOGISTIC SYSTEM -",
         "sub_login": "INGRESE SUS CREDENCIALES PLAYER 1",
         "usuario": "USUARIO:",
         "password": "PASSWORD:",
@@ -37,7 +37,7 @@ TRADUCCIONES = {
         "logout": "🚪 GAME OVER (LOGOUT)"
     },
     "中文 🇨🇳": {
-        "titulo_login": "🍄 马里奥核心 - 物流管理系统",
+        "titulo_login": "CONSORCIO SAN MIGUEL<br>- LOGISTIC SYSTEM -",
         "sub_login": "请输入玩家 1 的凭证 (PLAYER 1 CREDENTIALS)",
         "usuario": "用户名 (USER):",
         "password": "密码 (PASSWORD):",
@@ -57,7 +57,7 @@ TRADUCCIONES = {
         "logout": "🚪 游戏结束 (注销登录)"
     },
     "English 🇬🇧": {
-        "titulo_login": "🍄 MARIO CORE - LOGISTICS",
+        "titulo_login": "CONSORCIO SAN MIGUEL<br>- LOGISTIC SYSTEM -",
         "sub_login": "ENTER YOUR CREDENTIALS PLAYER 1",
         "usuario": "USERNAME:",
         "password": "PASSWORD:",
@@ -86,7 +86,7 @@ if "mario_world" not in st.session_state:
 if "filtro_oscuro" not in st.session_state:
     st.session_state.filtro_oscuro = 50
 
-# Enlaces de imágenes de tu repositorio GitHub[cite: 1]
+# Enlaces de imágenes del repositorio
 FONDOS_MUNDO = {
     "Fondo clasico": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-retro-mario2.jpg?raw=true",
     "Fondo Verde": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo.jpg?raw=true",
@@ -96,32 +96,104 @@ FONDOS_MUNDO = {
 url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, "")
 alfa_css = st.session_state.filtro_oscuro / 100.0
 
-# Styles de Super Mario con mejoras en selectores
+# Inyección de estilos con formato estricto de Videojuegos Antiguos ('Press Start 2P')
 st.markdown(f"""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         #MainMenu {{visibility: hidden;}} footer {{visibility: hidden;}} header {{visibility: hidden;}}
+        
+        /* Forzar fuente retro en toda la app */
         .stApp {{
             background-color: #5c94fc; 
             background-image: linear-gradient(rgba(16, 18, 22, {alfa_css}), rgba(16, 18, 22, {alfa_css + 0.1 if alfa_css <= 0.9 else 1.0})), url('{url_fondo_actual}');
             background-size: cover; background-attachment: fixed; background-position: center bottom; color: #FFFFFF !important;
         }}
-        p, label, span, .stMarkdown {{ font-family: 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }}
-        h1, h2, h3, h4, .retro-text {{ font-family: 'Press Start 2P', cursive !important; line-height: 1.5; }}
-        h1 {{ color: #E52521 !important; font-size: 22px !important; text-shadow: 3px 3px #000; text-align: center; }}
-        h2 {{ color: #FBD000 !important; font-size: 18px !important; text-shadow: 2px 2px #000; }}
-        h3 {{ color: #43B047 !important; font-size: 15px !important; text-shadow: 2px 2px #000; }}
-        .header-container {{ background-color: rgba(31, 35, 39, 0.9); padding: 24px; border-radius: 12px; margin-bottom: 25px; text-align: center; border: 6px solid #43B047; box-shadow: inset 0 0 20px #1e5220, 0px 5px 15px rgba(0,0,0,0.6); }}
+        
+        p, label, span, .stMarkdown, .stText {{ font-family: 'Press Start 2P', cursive !important; font-size: 11px !important; text-shadow: 2px 2px #000000; }}
+        h1, h2, h3, h4, .retro-text, .mario-title {{ font-family: 'Press Start 2P', cursive !important; line-height: 1.6; text-align: center; }}
+        
+        /* Contenedor en forma de Tubería de Mario Bros para el título */
+        .mario-pipe-container {{
+            background: linear-gradient(90deg, #148218 0%, #24cc2c 25%, #43b047 50%, #148218 100%);
+            border: 5px solid #000000;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 750px;
+            box-shadow: 0px 6px 0px #000000, inset 0 6px 0px rgba(255,255,255,0.4), inset 0 -6px 0px rgba(0,0,0,0.4);
+            text-align: center;
+        }}
+        
+        .mario-pipe-container h1 {{
+            color: #FFFFFF !important;
+            font-size: 18px !important;
+            text-shadow: 3px 3px 0px #000000 !important;
+            margin: 0 !important;
+            letter-spacing: 1px;
+        }}
+        
+        h2 {{ color: #FBD000 !important; font-size: 15px !important; text-shadow: 2px 2px #000; }}
+        h3 {{ color: #43B047 !important; font-size: 12px !important; text-shadow: 2px 2px #000; }}
+        
+        .header-container {{ 
+            background-color: rgba(31, 35, 39, 0.95); 
+            padding: 24px; 
+            border-radius: 12px; 
+            margin-bottom: 25px; 
+            text-align: center; 
+            border: 6px solid #43B047; 
+            box-shadow: inset 0 0 20px #1e5220, 0px 5px 15px rgba(0,0,0,0.6); 
+        }}
+        
+        /* Botón de navegación e interacciones */
         div.stButton > button {{
             background-color: #B2430A !important; color: #FFFFFF !important; font-family: 'Press Start 2P', cursive !important; font-size: 10px !important;
             border-radius: 4px !important; border: 4px solid #FCD116 !important; box-shadow: 3px 3px 0px #000000, inset 4px 4px 0px rgba(255,255,255,0.3) !important;
             padding: 12px 5px !important; width: 100% !important; min-height: 58px !important; transition: transform 0.1s ease-in-out !important;
         }}
-        div.stButton > button:hover {{ background-color: #FBD000 !important; color: #000000 !important; border-color: #FFFFFF !important; transform: translateY(-4px); }}
+        div.stButton > button:hover {{ background-color: #FBD000 !important; color: #000000 !important; border-color: #FFFFFF !important; transform: translateY(-3px); }}
+        
+        /* Botón START del login (Más largo y centrado) */
+        div.login-btn-container > div.stButton > button {{
+            font-size: 14px !important;
+            padding: 16px 30px !important;
+            min-height: 64px !important;
+            background-color: #E52521 !important; /* Rojo Mario */
+        }}
+        div.login-btn-container > div.stButton > button:hover {{
+            background-color: #FBD000 !important;
+            color: #000000 !important;
+        }}
+        
+        /* Estilos para inputs */
         .stSelectbox div[data-baseweb="select"] {{ background-color: rgba(31, 35, 39, 0.9) !important; border: 3px solid #FBD000 !important; border-radius: 6px !important; }}
-        .stSelectbox div[data-baseweb="select"] * {{ color: #FBD000 !important; font-family: monospace !important; font-weight: bold !important; }}
-        .stTextInput input, .stTextArea textarea {{ background-color: rgba(31, 35, 39, 0.9) !important; color: #FBD000 !important; border: 3px solid #FBD000 !important; }}
+        .stSelectbox div[data-baseweb="select"] * {{ color: #FBD000 !important; font-family: 'Press Start 2P', cursive !important; font-size: 10px !important; }}
+        .stTextInput input {{ background-color: rgba(31, 35, 39, 0.9) !important; color: #FBD000 !important; border: 3px solid #FBD000 !important; font-family: 'Press Start 2P', cursive !important; font-size: 12px !important; }}
+        
         div[data-testid="stTable"], div[data-testid="stDataFrame"] {{ background-color: rgba(31, 35, 39, 0.9) !important; border: 3px solid #43B047 !important; border-radius: 8px; }}
+        
+        /* Contenedor del enlace de Facebook */
+        .facebook-footer {{
+            text-align: center;
+            margin-top: 40px;
+            padding: 15px;
+            background-color: rgba(20, 24, 30, 0.9);
+            border: 4px solid #3b5998;
+            border-radius: 8px;
+            box-shadow: 4px 4px 0px #000;
+        }}
+        .facebook-link {{
+            color: #4267B2 !important;
+            font-family: 'Press Start 2P', cursive !important;
+            font-size: 10px !important;
+            text-decoration: none;
+            text-shadow: 1px 1px 0px #000;
+            display: inline-block;
+        }}
+        .facebook-link:hover {{
+            color: #FBD000 !important;
+            text-decoration: underline;
+        }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -134,25 +206,46 @@ if "autenticado" not in st.session_state:
 if not st.session_state.autenticado:
     col_lang1, col_lang2 = st.columns([2.5, 1])
     with col_lang2:
-        lang_login = st.selectbox("🌐 LANGUAGE / 语言:", list(TRADUCCIONES.keys()), key="lang_selector_login")
+        lang_login = st.selectbox("🌐 LANGUAGE:", list(TRADUCCIONES.keys()), key="lang_selector_login")
         if lang_login != st.session_state.lang:
             st.session_state.lang = lang_login
             st.rerun()
 
-    st.markdown(f"<br><h1>{t['titulo_login']}</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h4 style='text-align: center; color: #FBD000; font-size:12px;' class='retro-text'>{t['sub_login']}</h4>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    # Título encapsulado dentro de la tubería de Mario Bros
+    st.markdown(f"""
+        <div class="mario-pipe-container">
+            <h1>{t['titulo_login']}</h1>
+        </div>
+    """, unsafe_allow_html=True)
     
-    col_l1, col_l2, col_l3 = st.columns([1, 1.4, 1])
+    st.markdown(f"<h4 style='text-align: center; color: #FBD000; font-size:10px;' class='retro-text'>{t['sub_login']}</h4><br>", unsafe_allow_html=True)
+    
+    col_l1, col_l2, col_l3 = st.columns([1, 1.3, 1])
     with col_l2:
         user_input = st.text_input(t["usuario"])
         pass_input = st.text_input(t["password"], type="password")
-        if st.button("START"):
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Contenedor especial con CSS asignado para alargar el botón START
+        st.markdown('<div class="login-btn-container">', unsafe_allow_html=True)
+        if st.button("START", use_container_width=True):
             if user_input.strip() != "" and pass_input != "": 
                 st.session_state.autenticado = True
                 st.session_state.username = user_input.strip()
                 st.rerun()
             else:
                 st.error(t["error_login"])
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Sección inferior con acceso directo e icono de Facebook oficial del consorcio
+        st.markdown(f"""
+            <div class="facebook-footer">
+                <a class="facebook-link" href="https://www.facebook.com/consorciosanmiguelperu" target="_blank">
+                    🔷 FB: /consorciosanmiguelperu
+                </a>
+            </div>
+        """, unsafe_allow_html=True)
     st.stop()
 
 # =======================================================================
@@ -160,7 +253,6 @@ if not st.session_state.autenticado:
 # =======================================================================
 user_raw = st.session_state.username.lower()
 
-# Jerarquía Estricta de Cargos y Títulos de Visualización
 if user_raw == "larry":
     display_name = "Larry Rodriguez"
     display_cargo = "Jefe de Almacenes Externos"
@@ -170,9 +262,8 @@ elif user_raw in ["supervisor", "gerencia china", "gerencia", "auditor"]:
     display_name = st.session_state.username.upper()
     display_cargo = "Supervisor / Control de Auditoría G-China"
     es_admin_total = False
-    es_modo_lectura = True  # Bloqueado en Modo Lectura total
+    es_modo_lectura = True 
 else:
-    # Responsables de Almacén autorizados
     mapeo_responsables = {
         "piero pezo": "Piero Pezo (Responsable Almacén 10)",
         "gregorio rodriguez": "Gregorio Rodriguez (Responsable Almacén 01)",
@@ -184,12 +275,14 @@ else:
     es_admin_total = False
     es_modo_lectura = False
 
-# Encabezado Principal de Información Estilizado
+# Encabezado Principal en la vista interna (También usando la Tubería Verde)
 st.markdown(f"""
-    <div class="header-container">
-        <h1>MARIO LOGISTICS SYSTEM</h1>
-        <div style="color:#FBD000; font-family:'Press Start 2P'; font-size:9px; margin-top:8px; line-height: 1.8;">
-            {t['player']}: <span style="color:#FFF;">{display_name}</span><br>
+    <div class="mario-pipe-container">
+        <h1>CONSORCIO SAN MIGUEL - LOGISTIC SYSTEM</h1>
+    </div>
+    <div style="text-align: center; margin-bottom: 25px; background-color: rgba(31, 35, 39, 0.8); padding: 15px; border-radius: 8px; border: 3px dashed #43B047;">
+        <div style="color:#FBD000; font-family:'Press Start 2P'; font-size:9px; line-height: 1.8;">
+            {t['player']}: <span style="color:#FFF;">{display_name}</span> | 
             CARGO: <span style="color:#43B047;">{display_cargo}</span>
         </div>
     </div>
@@ -201,7 +294,6 @@ if "menu_actual" not in st.session_state:
 # =======================================================================
 # 🧭 NAVEGACIÓN DINÁMICA TRADUCIDA
 # =======================================================================
-# Todos los usuarios ven el Kardex, pero su rol interno condiciona qué hacen dentro
 if es_admin_total:
     opciones_menu = [t["btn_inicio"], t["btn_panel"], t["btn_stock"], t["btn_kardex"], t["btn_audit"], t["btn_setup"]]
 else:
@@ -251,7 +343,7 @@ if st.session_state.autenticado:
                     st.session_state.lang = lang_global
                     st.rerun()
         else:
-            st.error("🚫 ACCESO DENEGADO. Solo el Jefe de Almacenes Externos (Larry Rodriguez) puede modificar la configuración estructural.")
+            st.error("🚫 ACCESO DENEGADO. Solo el Jefe de Almacenes Externos puede modificar la configuración estructural.")
             
     elif st.session_state.menu_actual == "Inicio":
         try: home.render(sh)
@@ -264,7 +356,6 @@ if st.session_state.autenticado:
         reporte_stock.render(sh)
         
     elif st.session_state.menu_actual == "Movimientos (Kardex)":
-        # Ejecución del módulo Kardex pasando las banderas precisas de identidad y rol de lectura
         movimientos.render(sh, usuario=st.session_state.username, modo_lectura=es_modo_lectura)
                 
     elif st.session_state.menu_actual == "Auditoría de Terreno": 
