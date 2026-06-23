@@ -15,7 +15,6 @@ st.set_page_config(
 if "lang" not in st.session_state:
     st.session_state.lang = "Español 🇪🇸"
 
-# Diccionario Global de Traducciones para la interfaz principal
 TRADUCCIONES = {
     "Español 🇪🇸": {
         "titulo_login": "🍄 MARIO CORE - LOGISTICS",
@@ -79,12 +78,8 @@ TRADUCCIONES = {
     }
 }
 
-# Acceso rápido a los textos según el idioma seleccionado
 t = TRADUCCIONES[st.session_state.lang]
 
-# =======================================================================
-# 🌐 SISTEMA DE CONFIGURACIÓN DINÁMICA (MUNDOS Y OPACIDAD)
-# =======================================================================
 if "mario_world" not in st.session_state:
     st.session_state.mario_world = "Fondo clasico"
 
@@ -93,126 +88,40 @@ if "filtro_oscuro" not in st.session_state:
 
 # Enlaces de imágenes de tu repositorio GitHub[cite: 1]
 FONDOS_MUNDO = {
-    "Fondo clasico": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-retro-mario2.jpg?raw=true",
-    "Fondo Verde": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo.jpg?raw=true",
-    "Fondo 3D": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo-3d.jpg?raw=true"
+    "Fondo clasico": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-retro-mario2.jpg?raw=true",[cite: 1]
+    "Fondo Verde": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo.jpg?raw=true",[cite: 1]
+    "Fondo 3D": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo-3d.jpg?raw=true"[cite: 1]
 }
 
 url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, "")
 alfa_css = st.session_state.filtro_oscuro / 100.0
 
-# =======================================================================
-# 🍄 ESTILOS CSS AVANZADOS INTERFAZ SUPER MARIO
-# =======================================================================
+# Styles de Super Mario con mejoras en selectores
 st.markdown(f"""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
-        #MainMenu {{visibility: hidden;}}
-        footer {{visibility: hidden;}}
-        header {{visibility: hidden;}}
-        
+        #MainMenu {{visibility: hidden;}} footer {{visibility: hidden;}} header {{visibility: hidden;}}
         .stApp {{
             background-color: #5c94fc; 
-            background-image: linear-gradient(rgba(16, 18, 22, {alfa_css}), rgba(16, 18, 22, {alfa_css + 0.1 if alfa_css <= 0.9 else 1.0})), 
-                              url('{url_fondo_actual}');
-            background-size: cover;
-            background-attachment: fixed;
-            background-position: center bottom;
-            color: #FFFFFF !important;
+            background-image: linear-gradient(rgba(16, 18, 22, {alfa_css}), rgba(16, 18, 22, {alfa_css + 0.1 if alfa_css <= 0.9 else 1.0})), url('{url_fondo_actual}');
+            background-size: cover; background-attachment: fixed; background-position: center bottom; color: #FFFFFF !important;
         }}
-        
-        p, label, span, .stMarkdown {{
-            color: #FFFFFF !important;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 15px;
-            font-weight: 600;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-        }}
-        
-        h1, h2, h3, h4, .retro-text {{
-            font-family: 'Press Start 2P', cursive !important;
-            line-height: 1.5;
-        }}
-        
+        p, label, span, .stMarkdown {{ font-family: 'Segoe UI', Arial, sans-serif; font-size: 15px; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }}
+        h1, h2, h3, h4, .retro-text {{ font-family: 'Press Start 2P', cursive !important; line-height: 1.5; }}
         h1 {{ color: #E52521 !important; font-size: 22px !important; text-shadow: 3px 3px #000; text-align: center; }}
         h2 {{ color: #FBD000 !important; font-size: 18px !important; text-shadow: 2px 2px #000; }}
         h3 {{ color: #43B047 !important; font-size: 15px !important; text-shadow: 2px 2px #000; }}
-        
-        .header-container {{
-            background-color: rgba(31, 35, 39, 0.9);
-            padding: 24px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            text-align: center;
-            border: 6px solid #43B047;
-            box-shadow: inset 0 0 20px #1e5220, 0px 5px 15px rgba(0,0,0,0.6);
-        }}
-        
+        .header-container {{ background-color: rgba(31, 35, 39, 0.9); padding: 24px; border-radius: 12px; margin-bottom: 25px; text-align: center; border: 6px solid #43B047; box-shadow: inset 0 0 20px #1e5220, 0px 5px 15px rgba(0,0,0,0.6); }}
         div.stButton > button {{
-            background-color: #B2430A !important;
-            color: #FFFFFF !important;
-            font-family: 'Press Start 2P', cursive !important;
-            font-size: 10px !important;
-            border-radius: 4px !important;
-            border: 4px solid #FCD116 !important;
-            box-shadow: 3px 3px 0px #000000, 
-                        inset 4px 4px 0px rgba(255,255,255,0.3), 
-                        inset -4px -4px 0px rgba(0,0,0,0.4) !important;
-            padding: 12px 5px !important;
-            width: 100% !important;
-            min-height: 58px !important;
-            transition: transform 0.1s ease-in-out !important;
+            background-color: #B2430A !important; color: #FFFFFF !important; font-family: 'Press Start 2P', cursive !important; font-size: 10px !important;
+            border-radius: 4px !important; border: 4px solid #FCD116 !important; box-shadow: 3px 3px 0px #000000, inset 4px 4px 0px rgba(255,255,255,0.3) !important;
+            padding: 12px 5px !important; width: 100% !important; min-height: 58px !important; transition: transform 0.1s ease-in-out !important;
         }}
-        
-        div.stButton > button:hover, div.stButton > button:focus {{
-            background-color: #FBD000 !important;
-            color: #000000 !important;
-            border-color: #FFFFFF !important;
-            box-shadow: 0px 0px 15px #FBD000 !important;
-            transform: translateY(-4px);
-        }}
-        
-        /* 🛠️ REAJUSTE DE SELECTBOX (Evita los recortes de image_c5a071.png) */
-        .stSelectbox div[data-baseweb="select"] {{
-            background-color: rgba(31, 35, 39, 0.9) !important;
-            border: 3px solid #FBD000 !important;
-            border-radius: 6px !important;
-            min-height: 45px !important;
-        }}
-        
-        .stSelectbox div[data-baseweb="select"] * {{
-            color: #FBD000 !important;
-            font-family: monospace !important;
-            font-weight: bold !important;
-        }}
-
-        .stTextInput input, .stTextArea textarea {{
-            background-color: rgba(31, 35, 39, 0.9) !important;
-            color: #FBD000 !important;
-            font-family: monospace;
-            border: 3px solid #FBD000 !important;
-            min-height: 45px !important;
-        }}
-        
-        div[data-testid="stTable"], div[data-testid="stDataFrame"] {{
-            background-color: rgba(31, 35, 39, 0.9) !important;
-            border: 3px solid #43B047 !important;
-            border-radius: 8px;
-        }}
-        
-        @media (max-width: 768px) {{
-            div[data-testid="stHorizontalBlock"] {{
-                flex-direction: row !important;
-                flex-wrap: wrap !important;
-                gap: 10px !important;
-            }}
-            div[data-testid="column"] {{
-                width: calc(50% - 5px) !important;
-                flex-min-width: calc(50% - 5px) !important;
-                margin-bottom: 5px !important;
-            }}
-        }}
+        div.stButton > button:hover {{ background-color: #FBD000 !important; color: #000000 !important; border-color: #FFFFFF !important; transform: translateY(-4px); }}
+        .stSelectbox div[data-baseweb="select"] {{ background-color: rgba(31, 35, 39, 0.9) !important; border: 3px solid #FBD000 !important; border-radius: 6px !important; }}
+        .stSelectbox div[data-baseweb="select"] * {{ color: #FBD000 !important; font-family: monospace !important; font-weight: bold !important; }}
+        .stTextInput input, .stTextArea textarea {{ background-color: rgba(31, 35, 39, 0.9) !important; color: #FBD000 !important; border: 3px solid #FBD000 !important; }}
+        div[data-testid="stTable"], div[data-testid="stDataFrame"] {{ background-color: rgba(31, 35, 39, 0.9) !important; border: 3px solid #43B047 !important; border-radius: 8px; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -238,26 +147,50 @@ if not st.session_state.autenticado:
         user_input = st.text_input(t["usuario"])
         pass_input = st.text_input(t["password"], type="password")
         if st.button("START"):
-            if user_input != "" and pass_input != "": 
+            if user_input.strip() != "" and pass_input != "": 
                 st.session_state.autenticado = True
-                st.session_state.username = user_input
+                st.session_state.username = user_input.strip()
                 st.rerun()
             else:
                 st.error(t["error_login"])
     st.stop()
 
 # =======================================================================
-# 🏢 ENCABEZADO PRINCIPAL (DISEÑO LIMPIO)
+# 🏢 ASIGNACIÓN DE IDENTIDAD Y ROLES DE OPERACIÓN
 # =======================================================================
-user_activo = st.session_state.username
-LISTA_ADMINS = ["larry", "supervisor", "admin", "piero pezo"] 
-es_admin_o_super = user_activo.lower().strip() in LISTA_ADMINS
+user_raw = st.session_state.username.lower()
 
+# Jerarquía Estricta de Cargos y Títulos de Visualización
+if user_raw == "larry":
+    display_name = "Larry Rodriguez"
+    display_cargo = "Jefe de Almacenes Externos"
+    es_admin_total = True
+    es_modo_lectura = False
+elif user_raw in ["supervisor", "gerencia china", "gerencia", "auditor"]:
+    display_name = st.session_state.username.upper()
+    display_cargo = "Supervisor / Control de Auditoría G-China"
+    es_admin_total = False
+    es_modo_lectura = True  # Bloqueado en Modo Lectura total
+else:
+    # Responsables de Almacén autorizados
+    mapeo_responsables = {
+        "piero pezo": "Piero Pezo (Responsable Almacén 10)",
+        "gregorio rodriguez": "Gregorio Rodriguez (Responsable Almacén 01)",
+        "marcial huayta": "Marcial Huayta (Responsable Almacén 08)",
+        "enrique sanchez": "Enrique Sanchez (Responsable Almacén 06)"
+    }
+    display_name = mapeo_responsables.get(user_raw, st.session_state.username.upper())
+    display_cargo = "Responsable de Almacén Autorizado"
+    es_admin_total = False
+    es_modo_lectura = False
+
+# Encabezado Principal de Información Estilizado
 st.markdown(f"""
     <div class="header-container">
         <h1>MARIO LOGISTICS SYSTEM</h1>
-        <div style="color:#FBD000; font-family:'Press Start 2P'; font-size:10px; margin-top:8px;">
-            {t['player']}: <span style="color:#FFF;">{user_activo.upper()}</span> | {t['escenario']}: <span style="color:#43B047;">{st.session_state.mario_world.upper()}</span>
+        <div style="color:#FBD000; font-family:'Press Start 2P'; font-size:9px; margin-top:8px; line-height: 1.8;">
+            {t['player']}: <span style="color:#FFF;">{display_name}</span><br>
+            CARGO: <span style="color:#43B047;">{display_cargo}</span>
         </div>
     </div>
 """, unsafe_allow_html=True)
@@ -266,12 +199,13 @@ if "menu_actual" not in st.session_state:
     st.session_state.menu_actual = "Inicio"
 
 # =======================================================================
-# 🧭 NAVEGACIÓN DINÁMICA TRADUCIDA (TODOS CON HONGOS 🍄)
+# 🧭 NAVEGACIÓN DINÁMICA TRADUCIDA
 # =======================================================================
-if es_admin_o_super:
+# Todos los usuarios ven el Kardex, pero su rol interno condiciona qué hacen dentro
+if es_admin_total:
     opciones_menu = [t["btn_inicio"], t["btn_panel"], t["btn_stock"], t["btn_kardex"], t["btn_audit"], t["btn_setup"]]
 else:
-    opciones_menu = [t["btn_inicio"], t["btn_panel"], t["btn_stock"], t["btn_audit"]]
+    opciones_menu = [t["btn_inicio"], t["btn_panel"], t["btn_stock"], t["btn_kardex"], t["btn_audit"]]
 
 cols_nav = st.columns(len(opciones_menu))
 
@@ -290,42 +224,34 @@ for idx, opcion in enumerate(opciones_menu):
 st.markdown("<hr style='margin-top:5px; margin-bottom:20px; border-color:#43B047; border-width:3px;'>", unsafe_allow_html=True)
 
 # =======================================================================
-# 🔌 ENRUTADOR DE SECCIONES CON CONTROL DE ACCESO Y ROLES
+# 🔌 ENRUTADOR DE SECCIONES CON CONTROL DE ACCESO
 # =======================================================================
 sh = db.conectar_sheets()
 
 if st.session_state.autenticado:
-    es_admin_creador = user_activo.lower().strip() == "larry"
-    es_auditor_o_supervisor = user_activo.lower().strip() in ["supervisor", "admin", "piero pezo"]
-
     if st.session_state.menu_actual == "Ajustes del Sistema":
-        # REGLA: Solo tú (Larry) modificas la estructura principal
-        if es_admin_creador:
+        if es_admin_total:
             ajustes.render(sh)
-            
             st.markdown("<br>---", unsafe_allow_html=True)
             st.markdown(t["titulo_graficos"])
-            
             c1, c2, c3 = st.columns(3)
             with c1:
                 nuevo_fondo = st.selectbox(t["select_mundo"], list(FONDOS_MUNDO.keys()), key="mario_world_selector")
                 if nuevo_fondo != st.session_state.mario_world:
                     st.session_state.mario_world = nuevo_fondo
                     st.rerun()
-                    
             with c2:
-                nueva_oscuridad = st.slider(t["nivel_sombra"], min_value=10, max_value=90, value=st.session_state.filtro_oscuro, step=5, help=t["help_sombra"])
+                nueva_oscuridad = st.slider(t["nivel_sombra"], min_value=10, max_value=90, value=st.session_state.filtro_oscuro, step=5)
                 if nueva_oscuridad != st.session_state.filtro_oscuro:
                     st.session_state.filtro_oscuro = nueva_oscuridad
                     st.rerun()
-
             with c3:
-                lang_global = st.selectbox("🌐 IDIOMA / 语言 / LANGUAGE:", list(TRADUCCIONES.keys()), key="lang_selector_global", index=list(TRADUCCIONES.keys()).index(st.session_state.lang))
+                lang_global = st.selectbox("🌐 IDIOMA:", list(TRADUCCIONES.keys()), key="lang_selector_global", index=list(TRADUCCIONES.keys()).index(st.session_state.lang))
                 if lang_global != st.session_state.lang:
                     st.session_state.lang = lang_global
                     st.rerun()
         else:
-            st.error("🚫 ACCESO DENEGADO. Solo el Administrador Principal (Player 1) puede gestionar los parámetros estructurales.")
+            st.error("🚫 ACCESO DENEGADO. Solo el Jefe de Almacenes Externos (Larry Rodriguez) puede modificar la configuración estructural.")
             
     elif st.session_state.menu_actual == "Inicio":
         try: home.render(sh)
@@ -338,16 +264,8 @@ if st.session_state.autenticado:
         reporte_stock.render(sh)
         
     elif st.session_state.menu_actual == "Movimientos (Kardex)":
-        # 🛡️ PASO SEGURO DE VARIABLES A KARDEX
-        # Si es supervisor, auditor o admin (distinto a larry), modo_lectura se activará como True
-        modo_lectura_activo = es_auditor_o_supervisor
-        
-        try:
-            movimientos.render(sh, usuario=user_activo, modo_lectura=modo_lectura_activo)
-        except TypeError:
-            # Respaldo por Variable de Estado en caso de que la firma de render() sea asíncrona
-            st.session_state["modo_lectura_kardex"] = modo_lectura_activo
-            movimientos.render(sh, usuario=user_activo)
+        # Ejecución del módulo Kardex pasando las banderas precisas de identidad y rol de lectura
+        movimientos.render(sh, usuario=st.session_state.username, modo_lectura=es_modo_lectura)
                 
     elif st.session_state.menu_actual == "Auditoría de Terreno": 
         auditoria.render(sh)
