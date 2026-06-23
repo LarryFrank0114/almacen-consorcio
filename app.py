@@ -18,8 +18,8 @@ if "mario_world" not in st.session_state:
 
 # Diccionario de fondos de pantalla disponibles
 FONDOS_MUNDO = {
-    "Cielo Azul (Mundo 1-1)": "https://github.com/LarryFrank0114/almacen-consorcio/blob/4f327124ee4f8f4dbc82b61878968f467fd5faf7/imagenes/fondo-retro-mario2.jpg",
-    "Subterráneo (Mundo 1-2)": "https://i.imgur.com/KscY9b9.png", 
+    "Cielo Azul (Mundo 1-1)": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-retro-mario2.jpg?raw=true",
+    "Subterráneo (Mundo 1-2)": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo.jpg?raw=true", 
     "Castillo de Bowser": "https://i.imgur.com/mS26f8U.png"
 }
 
