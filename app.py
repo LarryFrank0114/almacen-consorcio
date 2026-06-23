@@ -91,7 +91,7 @@ if "mario_world" not in st.session_state:
 if "filtro_oscuro" not in st.session_state:
     st.session_state.filtro_oscuro = 50
 
-# Enlaces de imágenes de tu repositorio GitHub intactos[cite: 1]
+# Enlaces de imágenes de tu repositorio GitHub[cite: 1]
 FONDOS_MUNDO = {
     "Fondo clasico": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-retro-mario2.jpg?raw=true",
     "Fondo Verde": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo.jpg?raw=true",
@@ -173,11 +173,26 @@ st.markdown(f"""
             transform: translateY(-4px);
         }}
         
-        .stTextInput input, .stSelectbox div, .stTextArea textarea {{
+        /* CORRECCIÓN DE CAJAS SELECTBOX (Evita que el texto de image_c5a071.png se corte) */
+        .stSelectbox div[data-baseweb="select"] {{
+            background-color: rgba(31, 35, 39, 0.9) !important;
+            border: 3px solid #FBD000 !important;
+            border-radius: 6px !important;
+            min-height: 45px !important;
+        }}
+        
+        .stSelectbox div[data-baseweb="select"] * {{
+            color: #FBD000 !important;
+            font-family: monospace !important;
+            font-weight: bold !important;
+        }}
+
+        .stTextInput input, .stTextArea textarea {{
             background-color: rgba(31, 35, 39, 0.9) !important;
             color: #FBD000 !important;
             font-family: monospace;
             border: 3px solid #FBD000 !important;
+            min-height: 45px !important;
         }}
         
         div[data-testid="stTable"], div[data-testid="stDataFrame"] {{
@@ -232,34 +247,26 @@ if not st.session_state.autenticado:
     st.stop()
 
 # =======================================================================
-# 🏢 ENCABEZADO PRINCIPAL (TUBERÍA VERDE) + SELECTOR DE IDIOMA EN VIVO
+# 🏢 ENCABEZADO PRINCIPAL (AHORA LIMPIO Y CENTRADO)
 # =======================================================================
 user_activo = st.session_state.username
 LISTA_ADMINS = ["larry", "supervisor", "admin", "piero pezo"] 
 es_admin_o_super = user_activo.lower().strip() in LISTA_ADMINS
 
-col_head1, col_head2 = st.columns([3, 1])
-with col_head1:
-    st.markdown(f"""
-        <div class="header-container">
-            <h1>MARIO LOGISTICS SYSTEM</h1>
-            <div style="color:#FBD000; font-family:'Press Start 2P'; font-size:10px; margin-top:8px;">
-                {t['player']}: <span style="color:#FFF;">{user_activo.upper()}</span> | {t['escenario']}: <span style="color:#43B047;">{st.session_state.mario_world.upper()}</span>
-            </div>
+st.markdown(f"""
+    <div class="header-container">
+        <h1>MARIO LOGISTICS SYSTEM</h1>
+        <div style="color:#FBD000; font-family:'Press Start 2P'; font-size:10px; margin-top:8px;">
+            {t['player']}: <span style="color:#FFF;">{user_activo.upper()}</span> | {t['escenario']}: <span style="color:#43B047;">{st.session_state.mario_world.upper()}</span>
         </div>
-    """, unsafe_allow_html=True)
-
-with col_head2:
-    lang_global = st.selectbox("🌐 IDIOMA / 语言 / LANG:", list(TRADUCCIONES.keys()), key="lang_selector_global")
-    if lang_global != st.session_state.lang:
-        st.session_state.lang = lang_global
-        st.rerun()
+    </div>
+""", unsafe_allow_html=True)
 
 if "menu_actual" not in st.session_state:
     st.session_state.menu_actual = "Inicio"
 
 # =======================================================================
-# 🧭 NAVEGACIÓN DINÁMICA TRADUCIDA (TODOS CON HONGOS 🍄)
+# 🧭 NAVEGACIÓN DINÁMICA TRADUCIDA (BLOQUES DE LADRILLO)
 # =======================================================================
 if es_admin_o_super:
     opciones_menu = [t["btn_inicio"], t["btn_panel"], t["btn_stock"], t["btn_kardex"], t["btn_audit"], t["btn_setup"]]
@@ -283,7 +290,7 @@ for idx, opcion in enumerate(opciones_menu):
 st.markdown("<hr style='margin-top:5px; margin-bottom:20px; border-color:#43B047; border-width:3px;'>", unsafe_allow_html=True)
 
 # =======================================================================
-# 🔌 ENRUTADOR DE SECCIONES + PANEL DE CONTROL DE APARIENCIA EN SETUP
+# 🔌 ENRUTADOR DE SECCIONES + PANEL DE CONFIGURACIÓN COMPLETO EN SETUP
 # =======================================================================
 sh = db.conectar_sheets()
 
@@ -294,7 +301,7 @@ if st.session_state.autenticado:
         st.markdown("<br>---", unsafe_allow_html=True)
         st.markdown(t["titulo_graficos"])
         
-        c1, c2 = st.columns(2)
+        c1, c2, c3 = st.columns(3)
         with c1:
             nuevo_fondo = st.selectbox(
                 t["select_mundo"],
@@ -316,6 +323,18 @@ if st.session_state.autenticado:
             )
             if nueva_oscuridad != st.session_state.filtro_oscuro:
                 st.session_state.filtro_oscuro = nueva_oscuridad
+                st.rerun()
+
+        with c3:
+            # UBICACIÓN AJUSTADA: El selector de idioma ahora está integrado limpiamente aquí
+            lang_global = st.selectbox(
+                "🌐 IDIOMA / 语言 / LANGUAGE:", 
+                list(TRADUCCIONES.keys()), 
+                key="lang_selector_global",
+                index=list(TRADUCCIONES.keys()).index(st.session_state.lang)
+            )
+            if lang_global != st.session_state.lang:
+                st.session_state.lang = lang_global
                 st.rerun()
             
     elif st.session_state.menu_actual == "Inicio":
