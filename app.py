@@ -279,6 +279,7 @@ else:
 st.markdown(f"""
     <div class="mario-pipe-container">
         <h1>CONSORCIO SAN MIGUEL - LOGISTIC SYSTEM</h1>
+        <h2>RUC - 20607900052</h2>
     </div>
     <div style="text-align: center; margin-bottom: 25px; background-color: rgba(31, 35, 39, 0.8); padding: 15px; border-radius: 8px; border: 3px dashed #43B047;">
         <div style="color:#FBD000; font-family:'Press Start 2P'; font-size:9px; line-height: 1.8;">
