@@ -10,20 +10,26 @@ st.set_page_config(
 )
 
 # =======================================================================
-# 🌐 SISTEMA DE CAMBIO DE MUNDOS (FONDOS DINÁMICOS)
+# 🌐 SISTEMA DE CONFIGURACIÓN DINÁMICA (MUNDOS Y OPACIDAD)
 # =======================================================================
-# Inicializamos el fondo predeterminado con la estética de cielo azul (image_b9c085.png)
 if "mario_world" not in st.session_state:
     st.session_state.mario_world = "Fondo clasico"
 
-# Diccionario de fondos de pantalla disponibles
+# Guardamos el nivel de oscuridad en el estado de la sesión (por defecto 50%)
+if "filtro_oscuro" not in st.session_state:
+    st.session_state.filtro_oscuro = 50
+
+# Mapeo de imágenes Raw de tu GitHub
 FONDOS_MUNDO = {
     "Fondo clasico": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-retro-mario2.jpg?raw=true",
     "Fondo Verde": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo.jpg?raw=true", 
     "Fondo 3D": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo-3d.jpg?raw=true"
-}
+    }
 
-url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, FONDOS_MUNDO["Fondo clasico"])
+url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, "")
+
+# Convertimos el porcentaje del slider a decimal para el CSS (ej: 50% -> 0.50)
+alfa_css = st.session_state.filtro_oscuro / 100.0
 
 # =======================================================================
 # 🍄 ESTILOS CSS AVANZADOS INTERFAZ SUPER MARIO
@@ -36,9 +42,10 @@ st.markdown(f"""
         footer {{visibility: hidden;}}
         header {{visibility: hidden;}}
         
-        /* Fondo dinámico basado en la selección del usuario */
+        /* Capa de protección con opacidad regulable dinámicamente */
         .stApp {{
-            background-image: linear-gradient(rgba(16, 18, 22, 0.78), rgba(16, 18, 22, 0.85)), 
+            background-color: #5c94fc; 
+            background-image: linear-gradient(rgba(16, 18, 22, {alfa_css}), rgba(16, 18, 22, {alfa_css + 0.1 if alfa_css <= 0.9 else 1.0})), 
                               url('{url_fondo_actual}');
             background-size: cover;
             background-attachment: fixed;
@@ -46,12 +53,13 @@ st.markdown(f"""
             color: #FFFFFF !important;
         }}
         
-        /* Textos legibles sobre el cielo */
+        /* Textos legibles y contrastados */
         p, label, span, .stMarkdown {{
-            color: #F4F4F4 !important;
+            color: #FFFFFF !important;
             font-family: 'Segoe UI', Arial, sans-serif;
             font-size: 15px;
-            font-weight: 500;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }}
         
         /* Encabezados pixelados */
@@ -66,7 +74,7 @@ st.markdown(f"""
         
         /* Tubería Verde como Contenedor Principal */
         .header-container {{
-            background-color: #1F2327;
+            background-color: rgba(31, 35, 39, 0.9);
             padding: 24px;
             border-radius: 12px;
             margin-bottom: 25px;
@@ -103,14 +111,14 @@ st.markdown(f"""
         
         /* Inputs */
         .stTextInput input, .stSelectbox div, .stTextArea textarea {{
-            background-color: #1F2327 !important;
+            background-color: rgba(31, 35, 39, 0.9) !important;
             color: #FBD000 !important;
             font-family: monospace;
             border: 3px solid #FBD000 !important;
         }}
         
         div[data-testid="stTable"], div[data-testid="stDataFrame"] {{
-            background-color: #1F2327 !important;
+            background-color: rgba(31, 35, 39, 0.9) !important;
             border: 3px solid #43B047 !important;
             border-radius: 8px;
         }}
@@ -128,10 +136,6 @@ st.markdown(f"""
             }}
         }}
     </style>
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1407/1407123.png">
 """, unsafe_allow_html=True)
 
 # =======================================================================
@@ -201,26 +205,43 @@ for idx, opcion in enumerate(opciones_menu):
 st.markdown("<hr style='margin-top:5px; margin-bottom:20px; border-color:#43B047; border-width:3px;'>", unsafe_allow_html=True)
 
 # =======================================================================
-# 🔌 ENRUTADOR DE SECCIONES + SELECTOR DE FONDOS EN SETUP
+# 🔌 ENRUTADOR DE SECCIONES + PANEL DE CONTROL DE APARIENCIA EN SETUP
 # =======================================================================
 sh = db.conectar_sheets()
 
 if st.session_state.autenticado:
     if st.session_state.menu_actual == "Ajustes del Sistema":
-        # Renderizamos el módulo original de ajustes
         ajustes.render(sh)
         
-        # 🎨 INYECTAMOS EL SELECTOR DE FONDOS DIRECTAMENTE ABAJO EN LA PESTAÑA SETUP
+        # 🎨 CONTROLES VISUALES DE MARIO EN LA PESTAÑA SETUP
         st.markdown("<br>---", unsafe_allow_html=True)
-        st.markdown("### 🖼️ Selector de Escenarios Logísticos")
-        nuevo_fondo = st.selectbox(
-            "Cambia el fondo del videojuego para toda la app:",
-            list(FONDOS_MUNDO.keys()),
-            index=list(FONDOS_MUNDO.keys()).index(st.session_state.mario_world)
-        )
-        if nuevo_fondo != st.session_state.mario_world:
-            st.session_state.mario_world = nuevo_fondo
-            st.rerun()
+        st.markdown("### ⚙️ Configuración Gráfica del Nivel")
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            nuevo_fondo = st.selectbox(
+                "Selecciona el Escenario (Mundo):",
+                list(FONDOS_MUNDO.keys()),
+                index=list(FONDOS_MUNDO.keys()).index(st.session_state.mario_world)
+            )
+            if nuevo_fondo != st.session_state.mario_world:
+                st.session_state.mario_world = nuevo_fondo
+                st.rerun()
+                
+        with c2:
+            # Slider para controlar el nivel de oscuridad (Opacidad de la capa negra)
+            # Menor porcentaje = Fondo más brillante y claro
+            nueva_oscuridad = st.slider(
+                "Nivel de Sombra del Fondo (%):",
+                min_value=10, 
+                max_value=90, 
+                value=st.session_state.filtro_oscuro,
+                step=5,
+                help="Baja el porcentaje para que el cielo de Mario se vea más brillante y nítido."
+            )
+            if nueva_oscuridad != st.session_state.filtro_oscuro:
+                st.session_state.filtro_oscuro = nueva_oscuridad
+                st.rerun()
             
     elif st.session_state.menu_actual == "Inicio":
         try: home.render(sh)
