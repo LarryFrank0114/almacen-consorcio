@@ -187,8 +187,8 @@ else:
 # Encabezado Principal de Información Estilizado
 st.markdown(f"""
     <div class="header-container">
-        <h1>CMEC 2 - CONSORCIO SAN MIGUEL LOGISTICS SYSTEM</h1>
-        <h2>RUC 20607900052</h2>
+        <h1>CMEC 2 - CONSORCIO SAN MIGUEL - LOGISTICS SYSTEM</h1>
+        <h1>RUC 20607900052</h1>
         <div style="color:#FBD000; font-family:'Press Start 2P'; font-size:9px; margin-top:8px; line-height: 1.8;">
             {t['player']}: <span style="color:#FFF;">{display_name}</span><br>
             CARGO: <span style="color:#43B047;">{display_cargo}</span>
