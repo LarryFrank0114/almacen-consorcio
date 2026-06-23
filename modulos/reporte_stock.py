@@ -10,7 +10,7 @@ def render(sh):
 
     try:
         # 1. Conectar a la pestaña correspondiente en Google Sheets
-        hoja_stock = sh.worksheet("Stock")
+        hoja_stock = sh.worksheet("inventario")
         datos_raw = hoja_stock.get_all_records()
         
         if not datos_raw:
