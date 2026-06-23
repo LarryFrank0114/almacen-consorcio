@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # =======================================================================
-# 🎨 INYECCIÓN DE TEMA OSCURO PREMIUM DE ALTO CONTRASTE (FORZADO)
+# 🎨 DISEÑO OSCURO PREMIUM + INYECCIÓN PWA MOVIL
 # =======================================================================
 st.markdown("""
     <style>
@@ -18,27 +18,26 @@ st.markdown("""
         footer {visibility: hidden;}
         header {visibility: hidden;}
         
-        /* Fondo de la aplicación - Gris Oscuro Asfalto */
+        /* Fondo Gris Oscuro Asfalto */
         .stApp {
             background-color: #141619 !important;
             color: #FFFFFF !important;
         }
         
-        /* Lectura de textos globales */
+        /* Textos globales legibles */
         p, label, span, .stMarkdown {
             color: #E2E8F0 !important;
             font-family: 'Segoe UI', Arial, sans-serif;
             font-size: 15px;
         }
         
-        /* Títulos en Amarillo Mostaza Vibrante */
+        /* Títulos Mostaza */
         h1, h2, h3, h4, .mostaza-text {
             color: #E5A93C !important;
             font-weight: 700 !important;
-            font-family: 'Segoe UI', Arial, sans-serif;
         }
         
-        /* Banner del Encabezado Principal */
+        /* Banner Principal */
         .header-container {
             background-color: #1F2327;
             padding: 22px;
@@ -48,21 +47,8 @@ st.markdown("""
             border: 1px solid #343A40;
             box-shadow: 0px 4px 15px rgba(0,0,0,0.4);
         }
-        .header-title {
-            color: #E5A93C !important;
-            font-weight: 700;
-            margin: 0;
-            font-size: 26px;
-            letter-spacing: 1px;
-        }
-        .header-subtitle {
-            color: #A5A5A5 !important;
-            font-size: 13px;
-            margin-top: 6px;
-            font-weight: 500;
-        }
         
-        /* Adaptabilidad Móvil en Cuadrícula */
+        /* Adaptabilidad en Celulares (Cuadrícula táctil) */
         @media (max-width: 768px) {
             div[data-testid="stHorizontalBlock"] {
                 flex-direction: row !important;
@@ -76,7 +62,7 @@ st.markdown("""
             }
         }
         
-        /* Botones del Menú - Estilo Cápsula Redondeada */
+        /* Botones tipo Cápsula */
         div.stButton > button {
             background-color: #1F2327 !important;
             color: #FFFFFF !important;
@@ -86,37 +72,33 @@ st.markdown("""
             font-weight: 600 !important;
             width: 100% !important;
             min-height: 52px !important;
-            box-shadow: 2px 2px 6px rgba(0,0,0,0.4) !important;
             transition: all 0.2s ease-in-out !important;
         }
         
-        /* Hover e Iluminación de Selección */
+        /* Iluminación de Selección Activa */
         div.stButton > button:hover, div.stButton > button:focus {
             background-color: #E5A93C !important;
             color: #141619 !important;
             border-color: #E5A93C !important;
             box-shadow: 0px 0px 15px rgba(229, 169, 60, 0.5) !important;
-            transform: translateY(-2px);
-        }
-        
-        /* Cajas de Entrada e Inputs */
-        .stTextInput input, .stSelectbox div, .stTextArea textarea {
-            background-color: #1F2327 !important;
-            color: #FFFFFF !important;
-            border: 1px solid #495057 !important;
-        }
-        
-        /* DataFrames y Tablas de Datos */
-        div[data-testid="stTable"], div[data-testid="stDataFrame"], .styled-table {
-            background-color: #1F2327 !important;
-            border-radius: 8px;
-            padding: 10px;
         }
     </style>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#141619">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2897/2897818.png">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:text/javascript;base64,Z2xvYmFsVGhpcy5hZGRFdmVudExpc3RlbmVyKCdmeXRjaCcsIGV2ID0+IGV2LnJlc3BvbmRXaXRoKGZldGNoKGV2LnJlcXVlc3QpKSk7')
+            .then(() => console.log('PWA Logística Activa'));
+        }
+    </script>
 """, unsafe_allow_html=True)
 
 # =======================================================================
-# 🔐 GESTIÓN DE ACCESO GENERAL
+# 🔐 GESTIÓN DE ACCESO
 # =======================================================================
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
@@ -137,18 +119,16 @@ if not st.session_state.autenticado:
     st.stop()
 
 # =======================================================================
-# 🏢 ENCABEZADO POST-LOGIN
+# 🏢 ENCABEZADO PRINCIPAL
 # =======================================================================
 user_activo = st.session_state.username
-
-# Roles sin conflictos de mayúsculas
 LISTA_ADMINS = ["larry", "supervisor", "admin", "piero pezo"] 
 es_admin_o_super = user_activo.lower().strip() in LISTA_ADMINS
 
 st.markdown(f"""
     <div class="header-container">
-        <h1 class="header-title">🏢 CONSORCIO SAN MIGUEL</h1>
-        <div class="header-subtitle">Usuario: <span style="color:#E5A93C; font-weight:bold;">{user_activo}</span> | Panel de Control de Campo</div>
+        <h1 style="color: #E5A93C; margin:0; font-size:26px;">🏢 CONSORCIO SAN MIGUEL</h1>
+        <div style="color:#A5A5A5; font-size:13px; margin-top:6px;">Usuario: <span style="color:#E5A93C; font-weight:bold;">{user_activo}</span></div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -156,7 +136,7 @@ if "menu_actual" not in st.session_state:
     st.session_state.menu_actual = "Inicio"
 
 # =======================================================================
-# 🧭 NAVEGACIÓN POR BOTONES CON ÍCONOS
+# 🧭 BARRA DE NAVEGACIÓN EN PANTALLA TÁCTIL
 # =======================================================================
 if es_admin_o_super:
     opciones_menu = ["🏠\nInicio", "📊\nPanel Control", "📦\nStock Consolidados", "🔄\nMovimientos", "📋\nAuditoría Terreno", "⚙️\nAjustes"]
@@ -168,24 +148,18 @@ cols_nav = st.columns(len(opciones_menu))
 for idx, opcion in enumerate(opciones_menu):
     with cols_nav[idx]:
         nombre_tecnico_menu = opcion.split("\n")[1] if "\n" in opcion else opcion
-        
         if st.button(opcion, use_container_width=True, key=f"btn_{nombre_tecnico_menu}"):
-            if "Stock" in nombre_tecnico_menu:
-                st.session_state.menu_actual = "Stock Consolidados"
-            elif "Movimientos" in nombre_tecnico_menu:
-                st.session_state.menu_actual = "Movimientos (Kardex)"
-            elif "Auditoría" in nombre_tecnico_menu:
-                st.session_state.menu_actual = "Auditoría de Terreno"
-            elif "Ajustes" in nombre_tecnico_menu:
-                st.session_state.menu_actual = "Ajustes del Sistema"
-            else:
-                st.session_state.menu_actual = nombre_tecnico_menu
+            if "Stock" in nombre_tecnico_menu: st.session_state.menu_actual = "Stock Consolidados"
+            elif "Movimientos" in nombre_tecnico_menu: st.session_state.menu_actual = "Movimientos (Kardex)"
+            elif "Auditoría" in nombre_tecnico_menu: st.session_state.menu_actual = "Auditoría de Terreno"
+            elif "Ajustes" in nombre_tecnico_menu: st.session_state.menu_actual = "Ajustes del Sistema"
+            else: st.session_state.menu_actual = nombre_tecnico_menu
             st.rerun()
 
 st.markdown("<hr style='margin-top:5px; margin-bottom:15px; border-color:#2D2D2D;'>", unsafe_allow_html=True)
 
 # =======================================================================
-# 🔌 ENRUTADOR SEGURO DE MÓDULOS (PREVIENE CAÍDAS DE SESIÓN)
+# 🔌 ENRUTADOR SEGURO
 # =======================================================================
 sh = db.conectar_sheets()
 
@@ -193,20 +167,12 @@ if st.session_state.autenticado:
     if st.session_state.menu_actual == "Inicio":
         try: home.render(sh)
         except TypeError: home.render()
-    elif st.session_state.menu_actual == "Panel de Control":
-        dashboard.render(sh)
-    elif st.session_state.menu_actual == "Stock Consolidados":
-        reporte_stock.render(sh)
-    elif st.session_state.menu_actual == "Movimientos (Kardex)":
-        movimientos.render(sh)
-    elif st.session_state.menu_actual == "Auditoría de Terreno":
-        auditoria.render(sh)  
-    elif st.session_state.menu_actual == "Ajustes del Sistema":
-        ajustes.render(sh)
-else:
-    st.warning("🔒 Sesión inactiva. Regrese al Login.")
+    elif st.session_state.menu_actual == "Panel de Control": dashboard.render(sh)
+    elif st.session_state.menu_actual == "Stock Consolidados": reporte_stock.render(sh)
+    elif st.session_state.menu_actual == "Movimientos (Kardex)": movimientos.render(sh)
+    elif st.session_state.menu_actual == "Auditoría de Terreno": auditoria.render(sh)  
+    elif st.session_state.menu_actual == "Ajustes del Sistema": ajustes.render(sh)
 
-# Botón de cierre de sesión
 st.markdown("---")
 if st.button("🚪 Cerrar Sesión del Sistema", type="secondary", use_container_width=True):
     st.session_state.autenticado = False
