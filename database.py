@@ -38,7 +38,7 @@ class Database:
                 self.client = gspread.authorize(creds)
                 
                 # USAR URL DIRECTA - ¡REEMPLAZA CON TU ID!
-                sheet_id = "1ABC123DEF456GHI789"  # ← COLOCA TU ID DE HOJA AQUÍ
+                sheet_id = "1ydHMo4qjmpvA-T9hvmtbRzmwBBwIgF5xvyC2jWfWkTU"  # ← COLOCA TU ID DE HOJA AQUÍ
                 try:
                     self.spreadsheet = self.client.open_by_key(sheet_id)
                     st.success("✅ Conectado a Google Sheets")
