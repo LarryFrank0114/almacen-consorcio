@@ -1,371 +1,284 @@
+# app.py
 import streamlit as st
-import database as db
-from modulos import home, dashboard, reporte_stock, movimientos, ajustes, auditoria
+from auth import AuthSystem
+from email_service import EmailService
+import time
 
-# Configuración inicial de la página
+# Configuración de la página
 st.set_page_config(
-    page_title="CONSORCIO SAN MIGUEL - LOGISTIC SYSTEM",
+    page_title="Almacen Consorcio",
+    page_icon="🏪",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
-# =======================================================================
-# 🌐 SISTEMA DE IDIOMAS MULTILENGUAJE
-# =======================================================================
-if "lang" not in st.session_state:
-    st.session_state.lang = "Español 🇪🇸"
+# Inicializar servicios
+auth_system = AuthSystem()
+email_service = EmailService()
 
-TRADUCCIONES = {
-    "Español 🇪🇸": {
-        "titulo_login": "CONSORCIO SAN MIGUEL<br>- LOGISTIC SYSTEM -",
-        "sub_login": "INGRESE SUS CREDENCIALES PLAYER 1",
-        "usuario": "USUARIO:",
-        "password": "PASSWORD:",
-        "error_login": "❌ Credenciales incorrectas.",
-        "player": "PLAYER",
-        "escenario": "ESCENARIO",
-        "titulo_graficos": "### ⚙️ Configuración Gráfica del Nivel",
-        "select_mundo": "Selecciona el Escenario (Mundo):",
-        "nivel_sombra": "Nivel de Sombra del Fondo (%):",
-        "help_sombra": "Baja el porcentaje para que el cielo de Mario se vea más brillante y nítido.",
-        "btn_inicio": "🍄\nINICIO",
-        "btn_panel": "🍄\nPANEL",
-        "btn_stock": "🍄\nSTOCK",
-        "btn_kardex": "🍄\nKARDEX",
-        "btn_audit": "🍄\nAUDIT",
-        "btn_setup": "🍄\nSETUP",
-        "logout": "🚪 GAME OVER (LOGOUT)"
-    },
-    "中文 🇨🇳": {
-        "titulo_login": "CONSORCIO SAN MIGUEL<br>- LOGISTIC SYSTEM -",
-        "sub_login": "请输入玩家 1 的凭证 (PLAYER 1 CREDENTIALS)",
-        "usuario": "用户名 (USER):",
-        "password": "密码 (PASSWORD):",
-        "error_login": "❌ 凭证错误，请重试。",
-        "player": "玩家 (PLAYER)",
-        "escenario": "游戏场景 (WORLD)",
-        "titulo_graficos": "### ⚙️ 级别图形显示设置",
-        "select_mundo": "选择游戏背景 (MUNDO):",
-        "nivel_sombra": "背景阴影暗度 (%):",
-        "help_sombra": "降低百分比可让马里奥的天空背景更亮、更清晰。",
-        "btn_inicio": "🍄\n主页 (HOME)",
-        "btn_panel": "🍄\n仪表盘 (DASHBOARD)",
-        "btn_stock": "🍄\n库存 (STOCK)",
-        "btn_kardex": "🍄\n流水 (KARDEX)",
-        "btn_audit": "🍄\n审计 (AUDIT)",
-        "btn_setup": "🍄\n设置 (SETUP)",
-        "logout": "🚪 游戏结束 (注销登录)"
-    },
-    "English 🇬🇧": {
-        "titulo_login": "CONSORCIO SAN MIGUEL<br>- LOGISTIC SYSTEM -",
-        "sub_login": "ENTER YOUR CREDENTIALS PLAYER 1",
-        "usuario": "USERNAME:",
-        "password": "PASSWORD:",
-        "error_login": "❌ Incorrect credentials.",
-        "player": "PLAYER",
-        "escenario": "STAGE",
-        "titulo_graficos": "### ⚙️ Level Graphics Configuration",
-        "select_mundo": "Select Stage (World):",
-        "nivel_sombra": "Background Shadow Level (%):",
-        "help_sombra": "Lower the percentage to make Mario's sky brighter and clearer.",
-        "btn_inicio": "🍄\nHOME",
-        "btn_panel": "🍄\nPANEL",
-        "btn_stock": "🍄\nSTOCK",
-        "btn_kardex": "🍄\nKARDEX",
-        "btn_audit": "🍄\nAUDIT",
-        "btn_setup": "🍄\nSETUP",
-        "logout": "🚪 GAME OVER (LOGOUT)"
-    }
-}
-
-t = TRADUCCIONES[st.session_state.lang]
-
-if "mario_world" not in st.session_state:
-    st.session_state.mario_world = "Fondo clasico"
-
-if "filtro_oscuro" not in st.session_state:
-    st.session_state.filtro_oscuro = 50
-
-# Enlaces de imágenes del repositorio
-FONDOS_MUNDO = {
-    "Fondo clasico": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/fondo-retro-mario2.jpg?raw=true",
-    "Fondo Verde": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo.jpg?raw=true",
-    "Fondo 3D": "https://github.com/LarryFrank0114/almacen-consorcio/blob/main/imagenes/mario-bross-fondo-3d.jpg?raw=true"
-}
-
-url_fondo_actual = FONDOS_MUNDO.get(st.session_state.mario_world, "")
-alfa_css = st.session_state.filtro_oscuro / 100.0
-
-# Inyección de estilos con formato estricto de Videojuegos Antiguos ('Press Start 2P')
-st.markdown(f"""
+# Estilos CSS personalizados
+st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        #MainMenu {{visibility: hidden;}} footer {{visibility: hidden;}} header {{visibility: hidden;}}
-        
-        /* Forzar fuente retro en toda la app */
-        .stApp {{
-            background-color: #5c94fc; 
-            background-image: linear-gradient(rgba(16, 18, 22, {alfa_css}), rgba(16, 18, 22, {alfa_css + 0.1 if alfa_css <= 0.9 else 1.0})), url('{url_fondo_actual}');
-            background-size: cover; background-attachment: fixed; background-position: center bottom; color: #FFFFFF !important;
-        }}
-        
-        p, label, span, .stMarkdown, .stText {{ font-family: 'Press Start 2P', cursive !important; font-size: 11px !important; text-shadow: 2px 2px #000000; }}
-        h1, h2, h3, h4, .retro-text, .mario-title {{ font-family: 'Press Start 2P', cursive !important; line-height: 1.6; text-align: center; }}
-        
-        /* Contenedor en forma de Tubería de Mario Bros para el título */
-        .mario-pipe-container {{
-            background: linear-gradient(90deg, #148218 0%, #24cc2c 25%, #43b047 50%, #148218 100%);
-            border: 5px solid #000000;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px auto;
-            max-width: 750px;
-            box-shadow: 0px 6px 0px #000000, inset 0 6px 0px rgba(255,255,255,0.4), inset 0 -6px 0px rgba(0,0,0,0.4);
-            text-align: center;
-        }}
-        
-        .mario-pipe-container h1 {{
-            color: #FFFFFF !important;
-            font-size: 18px !important;
-            text-shadow: 3px 3px 0px #000000 !important;
-            margin: 0 !important;
-            letter-spacing: 1px;
-        }}
-        
-        h2 {{ color: #FBD000 !important; font-size: 15px !important; text-shadow: 2px 2px #000; }}
-        h3 {{ color: #43B047 !important; font-size: 12px !important; text-shadow: 2px 2px #000; }}
-        
-        .header-container {{ 
-            background-color: rgba(31, 35, 39, 0.95); 
-            padding: 24px; 
-            border-radius: 12px; 
-            margin-bottom: 25px; 
-            text-align: center; 
-            border: 6px solid #43B047; 
-            box-shadow: inset 0 0 20px #1e5220, 0px 5px 15px rgba(0,0,0,0.6); 
-        }}
-        
-        /* Botón de navegación e interacciones */
-        div.stButton > button {{
-            background-color: #B2430A !important; color: #FFFFFF !important; font-family: 'Press Start 2P', cursive !important; font-size: 10px !important;
-            border-radius: 4px !important; border: 4px solid #FCD116 !important; box-shadow: 3px 3px 0px #000000, inset 4px 4px 0px rgba(255,255,255,0.3) !important;
-            padding: 12px 5px !important; width: 100% !important; min-height: 58px !important; transition: transform 0.1s ease-in-out !important;
-        }}
-        div.stButton > button:hover {{ background-color: #FBD000 !important; color: #000000 !important; border-color: #FFFFFF !important; transform: translateY(-3px); }}
-        
-        /* Botón START del login (Más largo y centrado) */
-        div.login-btn-container > div.stButton > button {{
-            font-size: 14px !important;
-            padding: 16px 30px !important;
-            min-height: 64px !important;
-            background-color: #E52521 !important; /* Rojo Mario */
-        }}
-        div.login-btn-container > div.stButton > button:hover {{
-            background-color: #FBD000 !important;
-            color: #000000 !important;
-        }}
-        
-        /* Estilos para inputs */
-        .stSelectbox div[data-baseweb="select"] {{ background-color: rgba(31, 35, 39, 0.9) !important; border: 3px solid #FBD000 !important; border-radius: 6px !important; }}
-        .stSelectbox div[data-baseweb="select"] * {{ color: #FBD000 !important; font-family: 'Press Start 2P', cursive !important; font-size: 10px !important; }}
-        .stTextInput input {{ background-color: rgba(31, 35, 39, 0.9) !important; color: #FBD000 !important; border: 3px solid #FBD000 !important; font-family: 'Press Start 2P', cursive !important; font-size: 12px !important; }}
-        
-        div[data-testid="stTable"], div[data-testid="stDataFrame"] {{ background-color: rgba(31, 35, 39, 0.9) !important; border: 3px solid #43B047 !important; border-radius: 8px; }}
-        
-        /* Contenedor del enlace de Facebook */
-        .facebook-footer {{
-            text-align: center;
-            margin-top: 40px;
-            padding: 15px;
-            background-color: rgba(20, 24, 30, 0.9);
-            border: 4px solid #3b5998;
-            border-radius: 8px;
-            box-shadow: 4px 4px 0px #000;
-        }}
-        .facebook-link {{
-            color: #4267B2 !important;
-            font-family: 'Press Start 2P', cursive !important;
-            font-size: 10px !important;
-            text-decoration: none;
-            text-shadow: 1px 1px 0px #000;
-            display: inline-block;
-        }}
-        .facebook-link:hover {{
-            color: #FBD000 !important;
-            text-decoration: underline;
-        }}
+    .main-header {
+        text-align: center;
+        padding: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    .login-container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .verification-code {
+        font-size: 24px;
+        font-weight: bold;
+        color: #4CAF50;
+        text-align: center;
+        padding: 10px;
+        background: #f0f8f0;
+        border-radius: 5px;
+        margin: 10px 0;
+    }
+    .stButton > button {
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.5rem;
+        font-weight: bold;
+    }
+    .stButton > button:hover {
+        transform: scale(0.98);
+        transition: 0.3s;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# =======================================================================
-# 🔐 PANTALLA DE ACCESO (LOGIN)
-# =======================================================================
-if "autenticado" not in st.session_state:
-    st.session_state.autenticado = False
-
-if not st.session_state.autenticado:
-    col_lang1, col_lang2 = st.columns([2.5, 1])
-    with col_lang2:
-        lang_login = st.selectbox("🌐 LANGUAGE:", list(TRADUCCIONES.keys()), key="lang_selector_login")
-        if lang_login != st.session_state.lang:
-            st.session_state.lang = lang_login
-            st.rerun()
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    # Título encapsulado dentro de la tubería de Mario Bros
-    st.markdown(f"""
-        <div class="mario-pipe-container">
-            <h1>{t['titulo_login']}</h1>
+def show_header():
+    """Muestra el encabezado de la aplicación"""
+    st.markdown("""
+        <div class="main-header">
+            <h1>🏪 Sistema de Gestión de Almacén</h1>
+            <p>Control de inventario y gestión de productos</p>
         </div>
     """, unsafe_allow_html=True)
+
+def login_page():
+    """Página de inicio de sesión"""
+    show_header()
     
-    st.markdown(f"<h4 style='text-align: center; color: #FBD000; font-size:10px;' class='retro-text'>{t['sub_login']}</h4><br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
     
-    col_l1, col_l2, col_l3 = st.columns([1, 1.3, 1])
-    with col_l2:
-        user_input = st.text_input(t["usuario"])
-        pass_input = st.text_input(t["password"], type="password")
-        st.markdown("<br>", unsafe_allow_html=True)
+    with col2:
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+        st.title("🔐 Iniciar Sesión")
         
-        # Contenedor especial con CSS asignado para alargar el botón START
-        st.markdown('<div class="login-btn-container">', unsafe_allow_html=True)
-        if st.button("START", use_container_width=True):
-            if user_input.strip() != "" and pass_input != "": 
-                st.session_state.autenticado = True
-                st.session_state.username = user_input.strip()
-                st.rerun()
+        with st.form("login_form"):
+            email = st.text_input("📧 Correo Electrónico", placeholder="tu@email.com")
+            password = st.text_input("🔑 Contraseña", type="password", placeholder="Ingresa tu contraseña")
+            
+            col_btn1, col_btn2 = st.columns(2)
+            with col_btn1:
+                submitted = st.form_submit_button("Iniciar Sesión", use_container_width=True)
+            with col_btn2:
+                st.form_submit_button("Registrarse", on_click=show_register, use_container_width=True)
+        
+        if submitted:
+            if email and password:
+                user, message = auth_system.login(email, password)
+                if user:
+                    st.session_state['logged_in'] = True
+                    st.session_state['user'] = user
+                    st.success(f"✅ {message}")
+                    st.rerun()
+                else:
+                    st.error(f"❌ {message}")
             else:
-                st.error(t["error_login"])
+                st.warning("⚠️ Por favor, completa todos los campos")
+        
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # Sección inferior con acceso directo e icono de Facebook oficial del consorcio
-        st.markdown(f"""
-            <div class="facebook-footer">
-                <a class="facebook-link" href="https://www.facebook.com/consorciosanmiguelperu" target="_blank">
-                    🔷 FB: /consorciosanmiguelperu
-                </a>
-            </div>
-        """, unsafe_allow_html=True)
-    st.stop()
+        # Botón para recuperar contraseña
+        with st.expander("🔑 ¿Olvidaste tu contraseña?"):
+            st.info("Contacta al administrador para restablecer tu contraseña")
 
-# =======================================================================
-# 🏢 ASIGNACIÓN DE IDENTIDAD Y ROLES DE OPERACIÓN
-# =======================================================================
-user_raw = st.session_state.username.lower()
+def show_register():
+    """Muestra la página de registro"""
+    st.session_state['show_register'] = True
 
-if user_raw == "larry":
-    display_name = "Larry Rodriguez"
-    display_cargo = "Jefe de Almacenes Externos"
-    es_admin_total = True
-    es_modo_lectura = False
-elif user_raw in ["supervisor", "gerencia china", "gerencia", "auditor"]:
-    display_name = st.session_state.username.upper()
-    display_cargo = "Supervisor / Control de Auditoría G-China"
-    es_admin_total = False
-    es_modo_lectura = True 
-else:
-    mapeo_responsables = {
-        "piero pezo": "Piero Pezo (Responsable Almacén 10)",
-        "gregorio rodriguez": "Gregorio Rodriguez (Responsable Almacén 01)",
-        "marcial huayta": "Marcial Huayta (Responsable Almacén 08)",
-        "enrique sanchez": "Enrique Sanchez (Responsable Almacén 06)"
-    }
-    display_name = mapeo_responsables.get(user_raw, st.session_state.username.upper())
-    display_cargo = "Responsable de Almacén Autorizado"
-    es_admin_total = False
-    es_modo_lectura = False
-
-# Encabezado Principal en la vista interna (También usando la Tubería Verde)
-st.markdown(f"""
-    <div class="mario-pipe-container">
-        <h1>CONSORCIO SAN MIGUEL - LOGISTIC SYSTEM</h1>
-        <h2>RUC - 20607900052</h2>
-    </div>
-    <div style="text-align: center; margin-bottom: 25px; background-color: rgba(31, 35, 39, 0.8); padding: 15px; border-radius: 8px; border: 3px dashed #43B047;">
-        <div style="color:#FBD000; font-family:'Press Start 2P'; font-size:9px; line-height: 1.8;">
-            {t['player']}: <span style="color:#FFF;">{display_name}</span> | 
-            CARGO: <span style="color:#43B047;">{display_cargo}</span>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
-
-if "menu_actual" not in st.session_state:
-    st.session_state.menu_actual = "Inicio"
-
-# =======================================================================
-# 🧭 NAVEGACIÓN DINÁMICA TRADUCIDA
-# =======================================================================
-if es_admin_total:
-    opciones_menu = [t["btn_inicio"], t["btn_panel"], t["btn_stock"], t["btn_kardex"], t["btn_audit"], t["btn_setup"]]
-else:
-    opciones_menu = [t["btn_inicio"], t["btn_panel"], t["btn_stock"], t["btn_kardex"], t["btn_audit"]]
-
-cols_nav = st.columns(len(opciones_menu))
-
-for idx, opcion in enumerate(opciones_menu):
-    with cols_nav[idx]:
-        nombre_tecnico_menu = opcion.split("\n")[1] if "\n" in opcion else opcion
-        if st.button(opcion, use_container_width=True, key=f"btn_{idx}"):
-            if "STOCK" in nombre_tecnico_menu or "库存" in nombre_tecnico_menu: st.session_state.menu_actual = "Stock Consolidados"
-            elif "KARDEX" in nombre_tecnico_menu or "流水" in nombre_tecnico_menu: st.session_state.menu_actual = "Movimientos (Kardex)"
-            elif "AUDIT" in nombre_tecnico_menu or "审计" in nombre_tecnico_menu: st.session_state.menu_actual = "Auditoría de Terreno"
-            elif "SETUP" in nombre_tecnico_menu or "设置" in nombre_tecnico_menu: st.session_state.menu_actual = "Ajustes del Sistema"
-            elif "PANEL" in nombre_tecnico_menu or "仪表盘" in nombre_tecnico_menu: st.session_state.menu_actual = "Panel de Control"
-            else: st.session_state.menu_actual = "Inicio"
-            st.rerun()
-
-st.markdown("<hr style='margin-top:5px; margin-bottom:20px; border-color:#43B047; border-width:3px;'>", unsafe_allow_html=True)
-
-# =======================================================================
-# 🔌 ENRUTADOR DE SECCIONES CON CONTROL DE ACCESO
-# =======================================================================
-sh = db.conectar_sheets()
-
-if st.session_state.autenticado:
-    if st.session_state.menu_actual == "Ajustes del Sistema":
-        if es_admin_total:
-            ajustes.render(sh)
-            st.markdown("<br>---", unsafe_allow_html=True)
-            st.markdown(t["titulo_graficos"])
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                nuevo_fondo = st.selectbox(t["select_mundo"], list(FONDOS_MUNDO.keys()), key="mario_world_selector")
-                if nuevo_fondo != st.session_state.mario_world:
-                    st.session_state.mario_world = nuevo_fondo
-                    st.rerun()
-            with c2:
-                nueva_oscuridad = st.slider(t["nivel_sombra"], min_value=10, max_value=90, value=st.session_state.filtro_oscuro, step=5)
-                if nueva_oscuridad != st.session_state.filtro_oscuro:
-                    st.session_state.filtro_oscuro = nueva_oscuridad
-                    st.rerun()
-            with c3:
-                lang_global = st.selectbox("🌐 IDIOMA:", list(TRADUCCIONES.keys()), key="lang_selector_global", index=list(TRADUCCIONES.keys()).index(st.session_state.lang))
-                if lang_global != st.session_state.lang:
-                    st.session_state.lang = lang_global
-                    st.rerun()
-        else:
-            st.error("🚫 ACCESO DENEGADO. Solo el Jefe de Almacenes Externos puede modificar la configuración estructural.")
+def register_page():
+    """Página de registro de nuevos usuarios"""
+    show_header()
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+        st.title("📝 Registro de Usuario")
+        
+        # Paso 1: Datos del usuario
+        with st.form("register_form"):
+            nombre = st.text_input("👤 Nombre Completo", placeholder="Juan Pérez")
+            email = st.text_input("📧 Correo Electrónico", placeholder="tu@email.com")
+            password = st.text_input("🔑 Contraseña", type="password", placeholder="Mínimo 6 caracteres")
+            confirm_password = st.text_input("🔑 Confirmar Contraseña", type="password", placeholder="Repite tu contraseña")
             
-    elif st.session_state.menu_actual == "Inicio":
-        try: home.render(sh)
-        except TypeError: home.render()
+            col_btn1, col_btn2 = st.columns(2)
+            with col_btn1:
+                submitted = st.form_submit_button("Registrarse", use_container_width=True)
+            with col_btn2:
+                st.form_submit_button("Volver al Login", on_click=back_to_login, use_container_width=True)
         
-    elif st.session_state.menu_actual == "Panel de Control": 
-        dashboard.render(sh)
-        
-    elif st.session_state.menu_actual == "Stock Consolidados": 
-        reporte_stock.render(sh)
-        
-    elif st.session_state.menu_actual == "Movimientos (Kardex)":
-        movimientos.render(sh, usuario=st.session_state.username, modo_lectura=es_modo_lectura)
+        if submitted:
+            if not all([nombre, email, password, confirm_password]):
+                st.warning("⚠️ Por favor, completa todos los campos")
+            elif len(password) < 6:
+                st.warning("⚠️ La contraseña debe tener al menos 6 caracteres")
+            elif password != confirm_password:
+                st.warning("⚠️ Las contraseñas no coinciden")
+            else:
+                # Generar código de verificación
+                verification_code = email_service.generate_verification_code()
                 
-    elif st.session_state.menu_actual == "Auditoría de Terreno": 
-        auditoria.render(sh)
+                # Registrar usuario
+                success, message = auth_system.register_user(email, nombre, password, verification_code)
+                
+                if success:
+                    # Enviar correo con código
+                    if email_service.send_verification_email(email, verification_code):
+                        st.session_state['pending_verification'] = {
+                            'email': email,
+                            'code': verification_code
+                        }
+                        st.session_state['show_verification'] = True
+                        st.success("✅ ¡Registro exitoso! Se ha enviado un código a tu correo")
+                        st.rerun()
+                    else:
+                        st.error("❌ Error al enviar el correo de verificación. Intenta nuevamente")
+                else:
+                    st.error(f"❌ {message}")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# Botón de Salida Traducido
-st.markdown("---")
-if st.button(t["logout"], use_container_width=True):
-    st.session_state.autenticado = False
-    st.session_state.username = None
-    st.session_state.menu_actual = "Inicio"
+def verification_page():
+    """Página de verificación de código"""
+    show_header()
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+        st.title("🔐 Verificación de Correo")
+        
+        if 'pending_verification' in st.session_state:
+            email = st.session_state['pending_verification']['email']
+            st.info(f"📧 Se ha enviado un código de verificación a: **{email}**")
+            
+            with st.form("verification_form"):
+                code_input = st.text_input("📱 Código de Verificación", 
+                                         placeholder="Ingresa el código de 6 dígitos",
+                                         max_chars=6)
+                
+                col_btn1, col_btn2 = st.columns(2)
+                with col_btn1:
+                    submitted = st.form_submit_button("Verificar Código", use_container_width=True)
+                with col_btn2:
+                    st.form_submit_button("Reenviar Código", on_click=resend_code, use_container_width=True)
+            
+            if submitted:
+                if code_input:
+                    success, message = auth_system.verify_user_code(email, code_input)
+                    if success:
+                        st.success(f"✅ {message}")
+                        st.balloons()
+                        # Limpiar estado y redirigir a login
+                        del st.session_state['pending_verification']
+                        del st.session_state['show_verification']
+                        st.info("🎉 ¡Tu cuenta ha sido verificada! Ahora puedes iniciar sesión")
+                        time.sleep(2)
+                        st.rerun()
+                    else:
+                        st.error(f"❌ {message}")
+                else:
+                    st.warning("⚠️ Por favor, ingresa el código de verificación")
+        else:
+            st.warning("No hay una verificación pendiente")
+            if st.button("Volver al Login"):
+                back_to_login()
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
+def resend_code():
+    """Reenvía el código de verificación"""
+    if 'pending_verification' in st.session_state:
+        email = st.session_state['pending_verification']['email']
+        success, message = auth_system.resend_verification_code(email)
+        if success:
+            st.success(f"✅ {message}")
+        else:
+            st.error(f"❌ {message}")
+
+def back_to_login():
+    """Vuelve a la página de login"""
+    keys_to_clear = ['show_register', 'show_verification', 'pending_verification']
+    for key in keys_to_clear:
+        if key in st.session_state:
+            del st.session_state[key]
     st.rerun()
+
+def main_app():
+    """Aplicación principal (después del login)"""
+    st.title(f"🏪 Bienvenido, {st.session_state['user']['nombre']}!")
+    st.write(f"📧 {st.session_state['user']['email']} | 👤 Rol: {st.session_state['user']['rol']}")
+    
+    # Aquí va el contenido principal de tu aplicación de almacén
+    # Puedes mantener tu código existente de gestión de inventario
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("📦 Productos en Stock", "0", "0%")
+    with col2:
+        st.metric("🔄 Movimientos Hoy", "0", "0")
+    with col3:
+        st.metric("⚠️ Stock Bajo", "0", "0")
+    
+    # Espacio para tu contenido existente
+    st.info("📋 Aquí puedes agregar tu sistema de gestión de inventario")
+    
+    # Botón de cierre de sesión
+    if st.sidebar.button("🚪 Cerrar Sesión"):
+        st.session_state['logged_in'] = False
+        if 'user' in st.session_state:
+            del st.session_state['user']
+        st.rerun()
+
+# Control de flujo principal
+def main():
+    # Inicializar estados de sesión
+    if 'logged_in' not in st.session_state:
+        st.session_state['logged_in'] = False
+    
+    if 'show_register' not in st.session_state:
+        st.session_state['show_register'] = False
+    
+    if 'show_verification' not in st.session_state:
+        st.session_state['show_verification'] = False
+    
+    # Navegación de páginas
+    if st.session_state['logged_in']:
+        main_app()
+    elif st.session_state['show_verification']:
+        verification_page()
+    elif st.session_state['show_register']:
+        register_page()
+    else:
+        login_page()
+
+if __name__ == "__main__":
+    main()
