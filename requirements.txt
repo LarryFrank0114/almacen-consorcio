@@ -1,4 +1,9 @@
-streamlit
-pandas
-gspread
-google-api-python-client
+# requirements.txt
+streamlit==1.28.0
+pandas==2.1.0
+gspread==5.12.0
+google-api-python-client==2.100.0
+python-dotenv==1.0.0
+sendgrid==6.10.0  # Para enviar correos
+bcrypt==4.0.1     # Para encriptar contraseñas
+pyjwt==2.8.0      # Para generar tokens de verificación
