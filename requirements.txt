@@ -1,12 +1,13 @@
-# requirements.txt - Versión compatible con Streamlit Cloud
+# requirements.txt - Versión que funciona con Python 3.14
 streamlit>=1.28.0,<1.30.0
-pandas>=2.0.0,<2.2.0
+pandas>=2.2.0,<2.3.0  # Versión compatible con Python 3.14
 gspread>=5.12.0,<6.0.0
 google-api-python-client>=2.100.0,<3.0.0
 python-dotenv>=1.0.0,<2.0.0
 sendgrid>=6.10.0,<7.0.0
 bcrypt>=4.0.0,<5.0.0
 pyjwt>=2.8.0,<3.0.0
-Pillow>=9.0.0,<10.0.0  # IMPORTANTE: Versión que NO requiera compilación
+Pillow>=10.0.0,<11.0.0  # Ahora compatible con Python 3.14
 plotly>=5.0.0,<6.0.0
 openpyxl>=3.0.0,<4.0.0
+numpy>=1.24.0,<2.0.0
