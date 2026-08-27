@@ -1,4 +1,4 @@
-# database.py - Versión FINAL con URL directa
+# database.py - Versión DEFINITIVA con tu hoja específica
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
@@ -14,10 +14,13 @@ class Database:
         self._connect()
     
     def _connect(self):
-        """Establece conexión con Google Sheets usando URL directa"""
+        """Establece conexión con Google Sheets usando el ID de tu hoja"""
         try:
-            # Scopes mínimos necesarios
+            # Scopes mínimos necesarios - SOLO LECTURA/ESCRITURA
             scope = ['https://www.googleapis.com/auth/spreadsheets']
+            
+            # ID DE TU HOJA (obtenido de la URL)
+            SHEET_ID = "1ydHMo4qjmpvA-T9hvmtbRzmwBBwIgF5xvyC2jWfWkTU"
             
             # Intentar obtener credenciales de st.secrets (Streamlit Cloud)
             if 'google' in st.secrets:
@@ -37,15 +40,9 @@ class Database:
                 creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
                 self.client = gspread.authorize(creds)
                 
-                # USAR URL DIRECTA - ¡REEMPLAZA CON TU ID!
-                sheet_id = "1ydHMo4qjmpvA-T9hvmtbRzmwBBwIgF5xvyC2jWfWkTU"  # ← COLOCA TU ID DE HOJA AQUÍ
-                try:
-                    self.spreadsheet = self.client.open_by_key(sheet_id)
-                    st.success("✅ Conectado a Google Sheets")
-                except Exception as e:
-                    st.error(f"❌ No se encontró la hoja con ID: {sheet_id}")
-                    st.error(f"Detalle: {e}")
-                    self.spreadsheet = None
+                # Conectar DIRECTAMENTE a tu hoja por ID
+                self.spreadsheet = self.client.open_by_key(SHEET_ID)
+                st.success("✅ Conectado exitosamente a 'Almacen_Usuarios'")
                     
             else:
                 # Para desarrollo local
@@ -54,17 +51,14 @@ class Database:
                 creds_dict = json.loads(os.getenv('GOOGLE_SHEETS_CREDENTIALS'))
                 creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
                 self.client = gspread.authorize(creds)
-                
-                sheet_id = os.getenv('GOOGLE_SHEET_ID', '')
-                if sheet_id:
-                    self.spreadsheet = self.client.open_by_key(sheet_id)
-                else:
-                    st.error("❌ No se configuró GOOGLE_SHEET_ID")
-                    self.spreadsheet = None
+                self.spreadsheet = self.client.open_by_key(SHEET_ID)
+                print("✅ Conectado exitosamente a 'Almacen_Usuarios'")
                 
         except Exception as e:
-            st.error(f"❌ Error de conexión a Google Sheets: {e}")
+            st.error(f"❌ Error de conexión: {e}")
+            st.error("Verifica que la hoja existe y está compartida con la cuenta de servicio")
             self.client = None
+            self.spreadsheet = None
     
     def get_worksheet(self, name):
         """Obtiene una hoja de trabajo por nombre"""
@@ -110,10 +104,12 @@ class Database:
             return False, "Error de conexión a la hoja"
         
         try:
+            # Verificar si el email ya existe
             existing = self.get_user_by_email(user_data.get('Email', ''))
             if existing:
                 return False, "El email ya está registrado"
             
+            # Preparar datos del nuevo usuario
             new_user = [
                 user_data.get('Email', ''),
                 user_data.get('Nombre', ''),
@@ -124,9 +120,9 @@ class Database:
                 user_data.get('Codigo_Verificacion', ''),
                 user_data.get('Codigo_Expiracion', ''),
                 str(user_data.get('Activo', True)),
-                '0',
-                '',
-                ''
+                '0',  # Intentos fallidos
+                '',   # Bloqueado hasta
+                ''    # Último login
             ]
             
             worksheet.append_row(new_user)
@@ -151,55 +147,15 @@ class Database:
             if len(idx) == 0:
                 return False, "Usuario no encontrado"
             
-            row_num = idx[0] + 2
+            row_num = idx[0] + 2  # +2 por el encabezado
             current_row = worksheet.row_values(row_num)
             update_row = current_row.copy()
             
+            # Mapeo de campos a índices (0-based)
             campos = {
                 'Nombre': 1,
                 'Rol': 3,
                 'Verificado': 4,
                 'Activo': 8,
                 'Intentos_Fallidos': 9,
-                'Bloqueado_Hasta': 10,
-                'Ultimo_Login': 11
-            }
-            
-            for field, index in campos.items():
-                if field in user_data:
-                    update_row[index] = str(user_data[field])
-            
-            worksheet.update(f'A{row_num}:L{row_num}', [update_row])
-            return True, "Usuario actualizado exitosamente"
-            
-        except Exception as e:
-            return False, f"Error al actualizar usuario: {e}"
-    
-    def update_user_verification(self, email, code, expiry):
-        """Actualiza el código de verificación de un usuario"""
-        worksheet = self.get_worksheet('Usuarios')
-        if not worksheet:
-            return False
-        
-        try:
-            users = self.get_users()
-            
-            if users.empty:
-                return False
-            
-            idx = users[users['Email'] == email].index
-            if len(idx) == 0:
-                return False
-            
-            row_num = idx[0] + 2
-            worksheet.update(f'G{row_num}', code)
-            worksheet.update(f'H{row_num}', expiry)
-            return True
-            
-        except Exception as e:
-            st.error(f"❌ Error al actualizar verificación: {e}")
-            return False
-    
-    def mark_user_as_verified(self, email):
-        """Marca un usuario como verificado"""
-        return self.update_user(email, {'Verificado': True})
+                'Bloqueado_Hasta': 
