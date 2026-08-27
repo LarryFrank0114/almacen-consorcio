@@ -1,4 +1,4 @@
-# database.py - Versión CORREGIDA (solo usa hoja existente)
+# database.py - Versión FINAL con URL directa
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
@@ -14,17 +14,13 @@ class Database:
         self._connect()
     
     def _connect(self):
-        """Establece conexión con Google Sheets - SOLO LECTURA/ESCRITURA"""
+        """Establece conexión con Google Sheets usando URL directa"""
         try:
-            # Scopes necesarios
-            scope = [
-                'https://www.googleapis.com/auth/spreadsheets',
-                'https://www.googleapis.com/auth/drive.file'
-            ]
+            # Scopes mínimos necesarios
+            scope = ['https://www.googleapis.com/auth/spreadsheets']
             
             # Intentar obtener credenciales de st.secrets (Streamlit Cloud)
             if 'google' in st.secrets:
-                # Convertir secrets a dict
                 creds_dict = {
                     'type': st.secrets['google']['type'],
                     'project_id': st.secrets['google']['project_id'],
@@ -41,12 +37,13 @@ class Database:
                 creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
                 self.client = gspread.authorize(creds)
                 
-                # INTENTAR ABRIR LA HOJA EXISTENTE (NO CREAR)
+                # USAR URL DIRECTA - ¡REEMPLAZA CON TU ID!
+                sheet_id = "1ABC123DEF456GHI789"  # ← COLOCA TU ID DE HOJA AQUÍ
                 try:
-                    self.spreadsheet = self.client.open('Almacen_Usuarios')
-                    st.success("✅ Conectado a Google Sheets - Hoja 'Almacen_Usuarios' encontrada")
+                    self.spreadsheet = self.client.open_by_key(sheet_id)
+                    st.success("✅ Conectado a Google Sheets")
                 except Exception as e:
-                    st.error(f"❌ Error: No se encontró la hoja 'Almacen_Usuarios'. Verifica que existe y está compartida.")
+                    st.error(f"❌ No se encontró la hoja con ID: {sheet_id}")
                     st.error(f"Detalle: {e}")
                     self.spreadsheet = None
                     
@@ -58,11 +55,11 @@ class Database:
                 creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
                 self.client = gspread.authorize(creds)
                 
-                try:
-                    self.spreadsheet = self.client.open('Almacen_Usuarios')
-                    print("✅ Conectado a Google Sheets - Hoja 'Almacen_Usuarios' encontrada")
-                except Exception as e:
-                    print(f"❌ Error: No se encontró la hoja 'Almacen_Usuarios'")
+                sheet_id = os.getenv('GOOGLE_SHEET_ID', '')
+                if sheet_id:
+                    self.spreadsheet = self.client.open_by_key(sheet_id)
+                else:
+                    st.error("❌ No se configuró GOOGLE_SHEET_ID")
                     self.spreadsheet = None
                 
         except Exception as e:
@@ -113,7 +110,6 @@ class Database:
             return False, "Error de conexión a la hoja"
         
         try:
-            # Verificar si el email ya existe
             existing = self.get_user_by_email(user_data.get('Email', ''))
             if existing:
                 return False, "El email ya está registrado"
@@ -159,7 +155,6 @@ class Database:
             current_row = worksheet.row_values(row_num)
             update_row = current_row.copy()
             
-            # Mapeo de campos a índices
             campos = {
                 'Nombre': 1,
                 'Rol': 3,
@@ -197,8 +192,8 @@ class Database:
                 return False
             
             row_num = idx[0] + 2
-            worksheet.update(f'G{row_num}', code)  # Columna G = Codigo_Verificacion
-            worksheet.update(f'H{row_num}', expiry)  # Columna H = Codigo_Expiracion
+            worksheet.update(f'G{row_num}', code)
+            worksheet.update(f'H{row_num}', expiry)
             return True
             
         except Exception as e:
