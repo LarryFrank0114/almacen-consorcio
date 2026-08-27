@@ -1,4 +1,4 @@
-# database.py
+# database.py - Versión CORREGIDA con scopes
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
@@ -17,18 +17,25 @@ class Database:
     def _connect(self):
         """Establece conexión con Google Sheets"""
         try:
+            # Scopes COMPLETOS necesarios
+            scope = [
+                'https://www.googleapis.com/auth/spreadsheets',
+                'https://www.googleapis.com/auth/drive',
+                'https://www.googleapis.com/auth/drive.file'
+            ]
+            
             # Intentar obtener credenciales de st.secrets (Streamlit Cloud)
             if 'google' in st.secrets:
-                credentials = st.secrets['google']
-                scope = ['https://www.googleapis.com/auth/spreadsheets']
-                creds = Credentials.from_service_account_info(credentials, scopes=scope)
+                # Crear credenciales directamente desde st.secrets
+                creds_dict = dict(st.secrets['google'])
+                creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
                 self.client = gspread.authorize(creds)
+                st.success("✅ Conectado a Google Sheets")
             else:
                 # Para desarrollo local
                 from dotenv import load_dotenv
                 load_dotenv()
                 creds_dict = json.loads(os.getenv('GOOGLE_SHEETS_CREDENTIALS'))
-                scope = ['https://www.googleapis.com/auth/spreadsheets']
                 creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
                 self.client = gspread.authorize(creds)
                 
@@ -45,18 +52,24 @@ class Database:
             # Intentar abrir el spreadsheet existente
             try:
                 self.spreadsheet = self.client.open('Almacen_Consorcio')
+                st.info("📊 Hoja existente encontrada")
             except:
                 # Crear nuevo spreadsheet
                 self.spreadsheet = self.client.create('Almacen_Consorcio')
+                st.info("📊 Nueva hoja creada")
                 
                 # Obtener email para compartir
                 try:
-                    share_email = st.secrets.get('secrets', {}).get('email_from', '')
+                    if 'google' in st.secrets:
+                        share_email = st.secrets['google']['client_email']
+                    else:
+                        share_email = os.getenv('EMAIL_FROM', '')
                 except:
-                    share_email = os.getenv('EMAIL_FROM', '')
+                    share_email = ''
                 
                 if share_email:
                     self.spreadsheet.share(share_email, perm_type='user', role='writer')
+                    st.info(f"📧 Hoja compartida con: {share_email}")
             
             # Crear las hojas necesarias
             self._create_worksheets()
@@ -106,7 +119,8 @@ class Database:
                 worksheet = self.spreadsheet.add_worksheet(sheet_name, rows=1, cols=len(headers))
                 worksheet.append_row(headers)
     
-    # Resto de métodos igual que antes...
+    # ==================== MÉTODOS DE USUARIOS ====================
+    
     def get_users(self):
         """Obtiene todos los usuarios"""
         if not self.spreadsheet:
