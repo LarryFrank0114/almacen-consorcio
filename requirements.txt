@@ -1,9 +1,12 @@
-# requirements.txt
-streamlit==1.28.0
-pandas==2.1.0
-gspread==5.12.0
-google-api-python-client==2.100.0
-python-dotenv==1.0.0
-sendgrid==6.10.0  # Para enviar correos
-bcrypt==4.0.1     # Para encriptar contraseñas
-pyjwt==2.8.0      # Para generar tokens de verificación
+# requirements.txt - Versión compatible con Streamlit Cloud
+streamlit>=1.28.0,<1.30.0
+pandas>=2.0.0,<2.2.0
+gspread>=5.12.0,<6.0.0
+google-api-python-client>=2.100.0,<3.0.0
+python-dotenv>=1.0.0,<2.0.0
+sendgrid>=6.10.0,<7.0.0
+bcrypt>=4.0.0,<5.0.0
+pyjwt>=2.8.0,<3.0.0
+Pillow>=9.0.0,<10.0.0  # IMPORTANTE: Versión que NO requiera compilación
+plotly>=5.0.0,<6.0.0
+openpyxl>=3.0.0,<4.0.0
