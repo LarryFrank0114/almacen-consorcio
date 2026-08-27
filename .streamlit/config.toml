@@ -13,3 +13,7 @@ enableCORS = false
 
 [browser]
 gatherUsageStats = false
+
+# IMPORTANTE: Para evitar problemas de compatibilidad
+[runner]
+fastReruns = false
