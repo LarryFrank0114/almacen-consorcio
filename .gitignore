@@ -1,0 +1,15 @@
+# .gitignore
+.env
+.streamlit/secrets.toml
+*.pyc
+__pycache__/
+*.log
+*.json
+!example.json
+.DS_Store
+.idea/
+.vscode/
+*.key
+*.pem
+*.db
+*.sqlite3
